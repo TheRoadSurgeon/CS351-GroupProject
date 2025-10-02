@@ -147,6 +147,19 @@ Inspo:  Job boards + the "Creative" in Creative coding made me think of art.
 
 **From 5 project ideas you have above, please choose one of the project that you are going with for the rest of the semester. Explain why you are going with that project**
 
+We choose to go with donateToFoodBank.
+
+The idea resonated with a lot of members of the group not just because of the common good that providing 
+info on food banks and support can provide, but also because it can bring change on a local level such
+as here in Chicago. 
+
+It allows donors to provide and stay up to date on what food banks need and inform people who need the 
+services about what is offered and provide them with extremely necessary resources.
+
+We also chose the application because it had, in terms of features, a little bit of everything that we wanted 
+to to work on and provide a bit of a challenge. 
+
+
 # Extra Credit (Only do this if you are done with Idea Finalization)
 
 ## Database Design
