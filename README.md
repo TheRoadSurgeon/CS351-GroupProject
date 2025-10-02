@@ -101,14 +101,15 @@ Week of 12/01: Finalize everything. Clean up the code, test one last time, and g
 
 # Track 3: Creative Coding and Cultural Expression
 
-**Idea - Story - Inspiration 4:**
+Idea:   Language learning using generative PDF translations
+Story:  Learning a new language is tough, and some study material is uninteresting. Allowing users to learn using their own material 
+        would help boost their learning experience. They can upload any story they want where the pages will be parsed. The user would be able to
+        select any words they don't know and get the translation and meaning.
+Inspo:  Linq + personal language learning experiences.
 
-**Implementation 4:**
-
-**Idea - Story - Inspiration 5:**
-
-**Implementation 5:**
-
+Idea:   Connect to local artists
+Story:  Local artists can upload example works that they made, and people can connect to them or make requests. 
+Inspo:  Job boards + the "Creative" in Creative coding made me think of art.
 
 # Idea Finalization
 
