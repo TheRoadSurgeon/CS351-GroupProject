@@ -36,7 +36,8 @@ Week of 12/01: Finalize everything. Clean up the code, test one last time, and g
 **Q3a:** How can your group communicate when doing the Full Stack Group Project?  
 **Q3b:** What are the usernames of each group member on that platform?  
 **Q3c:** What is your group’s expected response time to messages?  
-**Answer** 
+**Answer**
+
 *We will use Discord for communication*  
 
 *Usernames:*  
@@ -54,6 +55,7 @@ Week of 12/01: Finalize everything. Clean up the code, test one last time, and g
 **Q4a:** How will your group handle situations when there is conflict in your group?  
 **Q4b:** How will your group handle situations when a member is not contributing enough?  
 **Answer** 
+
 *Q4a: If there is a disagreement or conflict in our group, we will hold a meeting so that every group member can share their opinion on the matter. If we still can’t agree, we will take a vote and go with the majority decision. We want to keep things respectful and work together to find the best solution.*
 
 *Q4b: If a member is not contributing enough, we will bring it up to them immediately. If the rest of the group still does not see an improvement in the team member's behavior, will have a group meeting in discord and the team member will be given a second warrning. If the problem continues, we will let the instructor know so they can help us handle it.*
