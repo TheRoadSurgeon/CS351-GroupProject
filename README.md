@@ -10,7 +10,8 @@
 # Timeline: Weekly Meeting Goals  
 
 **Q2:** What is your goals that your group want to achieve in each weekly meeting?  
-**Answer** 
+**Answer**
+
 Week of 10/06: Meet to plan the main idea of the project. Decide which API we will use, what data structures we need, and how to connect Flask and React together. Make sure everyone knows their part.
 
 Week of 10/13: Set up the project structure. Create the Flask backend and React frontend. Make sure both sides can run and start sending simple test data.
@@ -74,6 +75,7 @@ Week of 12/01: Finalize everything. Clean up the code, test one last time, and g
 
 **Q6:** Which tech stacks will your group use? (Django + React or Flask + React)
 **Answer**
+
 *Flask + React*
 ---
 # Full Stack Group Project Track  
@@ -117,21 +119,25 @@ Week of 12/01: Finalize everything. Clean up the code, test one last time, and g
 
 **Q1: What database are you using for your project (SQLite, PostgreSQL, noSQL, MongoDB,...), and why do you choose it?**
 **Answer**
+
 *We are using SQLite for our project. We chose it because it’s easy to set up and works well with Flask. SQLite is also reliable for projects that have low traffic.*
 
 **Q2: How will database be helpful to your project? How will you design your database to support your application features?**
 **Answer**
+
 *It saves our data so it doesn’t disappear when the app restarts (e.g. food banks, needed items, pledges). It will let us search and filter food banks easily. It will also keep the data consistent for everyone on the team and supports basic data analysis.*
 
 ## Third-Party API Integration
 
 **Q3: Which third-party API(s) will you integrate into your project? What data will you pull from the API(s), and how will you use it in your application?**
 **Answer**
+
 *We plan to use the Google Maps API. It will help us display the locations of nearby food banks on a map. We will use the API to pull data such as the address, coordinates, and directions. This will make it easier for users to find food banks near them and plan where to drop off their donations.*
 
 
 **Q4: Does your API key has limitations such as rate limits or downtime? How are you going to deal with that?**
 **Answer**
+
 *The Google Maps API has some limits, such as a limit on how many requests we can make per day. To account for this downtime we can limit our requests only to when they are need (e.g. when users search for nearby food banks). We will also store basic location data in our database so the app can still work even if the API is down or we reach the limit.*
 
 ## Authentication and Security
