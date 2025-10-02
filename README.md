@@ -67,6 +67,7 @@ Week of 12/01: Finalize everything. Clean up the code, test one last time, and g
 
 **Q5:** How will your group divide your role in the Group Project?  
 **Answer** 
+
 *Anupam and Nathen - Backend, Hristian and Thomas - Frontend*  
 
 ---
