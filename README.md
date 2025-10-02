@@ -1,6 +1,7 @@
 # Logistics  
 
 **Q1:** At what time in the week would your group be available to meet online? 
+
 **Answer** 
 *We are avaliable to meet online on Wednesday and Friday after 6:30pm.*
 *Our weekly meetings will be on Friday after 6:30pm*
@@ -44,8 +45,8 @@ Week of 12/01: Finalize everything. Clean up the code, test one last time, and g
 *Usernames:*  
 *Anupam - Anupamsai#1260*  
 *Nathan - nathantkn*  
-*Thomas - Thomas B#2491* 
-*Hristian - bulgy#4105*  
+*Thomas - Thomas B#2491*  
+*Hristian - bulgy#4105*
 
 *Our expected response time will be within 4 hours.*  
 
@@ -75,12 +76,13 @@ Week of 12/01: Finalize everything. Clean up the code, test one last time, and g
 # Tech Stacks
 
 **Q6:** Which tech stacks will your group use? (Django + React or Flask + React)
+
 **Answer**
 
 *Flask + React*
+
 ---
 # Full Stack Group Project Track  
----
 
 # Track 1: Tackling Generative AI Consequences
 **Problem 1:** Generative AI can create realistic fake news articles, images, and videos that spread misinformation online. People often struggle to verify whether content is authentic or AI-generated, and could easily be tricked online.
@@ -99,7 +101,8 @@ Students often struggle to understand what scores they need on upcoming assignme
 
 **Solution 2:** 
 A Grade-Prediction and Study-Strategy Platform that empowers students to take control of their academic outcomes.
-***Key Features***
+
+**Key Features**
 * Dynamic Grade Calculator: Continuously computes the score needed on each upcoming assignment or exam to hit a target final grade.
 * Personalized Course Setup: Parses syllabus PDFs to auto-detect assignment types, weights, and grading rules.
 * Goal-Oriented Tracking: Lets students set grade goals and track progress visually.
@@ -108,7 +111,8 @@ A Grade-Prediction and Study-Strategy Platform that empowers students to take co
     * Suggests realistic study strategies by asking students about past study successes and their preferences (e.g., focusing more on projects vs. homework).
     * Offers predictive insights like: “If you score 82% on the final, your course grade will likely rise by 4%.”
     * Provides comparative benchmarks, e.g., “Class average so far suggests a likely curve of +2–3%.”
-***UI***
+
+**UI**
 * Dashboard: List of assignments, current scores, predicted needed scores.
 * “Our Take” Panel: AI-generated study strategies, highlighting where to focus time for maximum impact.
 By reducing guesswork, improving focus, and personalizing study planning, the platform makes academic progress more transparent and attainable 
@@ -122,7 +126,8 @@ Food banks often struggle to efficiently source and coordinate food donations.
 
 **Solution 3:**
 A Community-Driven Food Bank Donation & Coordination Platform
-***Key Features:***
+
+**Key Features:**
 * Create Donation Post: Donors can post available items with details (food type, quantity, expiration date, location).
 * Nearby Notifications: Automatically notifies nearby food banks when a new donation is posted.
 * Donation Scheduling: Food banks can message donors to arrange pickup or drop-off times.
@@ -150,7 +155,7 @@ Inspo:  Job boards + the "Creative" in Creative coding made me think of art.
 
 **From 5 project ideas you have above, please choose one of the project that you are going with for the rest of the semester. Explain why you are going with that project**
 
-We choose to go with donateToFoodBank.
+We have chosen to go with the Food Bank Donation & Coordination platform.
 
 The idea resonated with a lot of members of the group not just because of the common good that providing 
 info on food banks and support can provide, but also because it can bring change on a local level such
@@ -194,17 +199,17 @@ to to work on and provide a bit of a challenge.
 
 **Q5: What authentication method will you use (e.g., username/password, OAuth, JWT)?**
 
-*We will use simple OAuth to make sign-ups and logins quick and secure. OAuth is relatively easy to setup since it shifts most of the security burden to the trusted provider. This makes the platform more user-friendly and trustworthy, especially for donors and verified food banks.*
+*We will use simple OAuth to make sign-ups and logins quick and secure. OAuth is relatively easy to setup and configure since it shifts most of the security burden to the trusted provider. This makes the platform more user-friendly and trustworthy, which is critical for donors and verified food banks.*
 
 **Q6: How will you store and protect sensitive user data (e.g., passwords, tokens)?**
 
-*Since we are using OAuth, we will not store raw passwords at all. Instead, we will securely store only the minimal information needed, such as OAuth tokens or user IDs, in the database. Tokens will be encrypted or stored with a secure library, and all communication with the server will be over HTTPS. Access tokens will be short-lived, and refresh tokens will be handled carefully to reduce the risk of unauthorized access.*
+*Since we are using OAuth, we won't be storing passwords locally. Instead, we will only store the minimal information needed, such as OAuth tokens or user IDs, in the database. Tokens will be encrypted or stored and all communication with the server will be over HTTPS. Furthermore, access tokens will have short lifespans, and refresh tokens will be handled securely to reduce unauthorized access.*
 
 ## Deployment
 
 **Q7: Where will you deploy your project (e.g., Heroku, AWS, Render)? How will you manage environment variables and secrets during deployment?**
 
-*We plan to deploy the frontend on Vercel, which is optimized for React applications, and connect it to a backend (e.g., Flask API) hosted on a cloud provider. Environment variables and API keys will be stored securely in Vercel’s built-in environment variable manager. This ensures secrets remain hidden from the codebase while still being accessible during runtime.*
+*We plan to deploy the frontend on Vercel, which is optimized for React applications, and connect it to a backend hosted on a cloud provider. Environment variables and API keys will be stored securely in Vercel’s environment variable manager. This ensures secrets remain hidden from the codebase while still being accessible during runtime.*
 
 **Q8: How will you ensure your deployment is reliable and easy to update?**
 
