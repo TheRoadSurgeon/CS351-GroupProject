@@ -83,9 +83,9 @@ Week of 12/01: Finalize everything. Clean up the code, test one last time, and g
 ---
 
 # Track 1: Tackling Generative AI Consequences
-**Problem 1:** 
+**Problem 1:** Generative AI can create realistic fake news articles, images, and videos that spread misinformation online. People often struggle to verify whether content is authentic or AI-generated, and could easily be tricked online.
 
-**Solution 1:** 
+**Solution 1:** Build a web app that helps users fact-check content by cross-referencing claims against trusted sources. It focuses on content verification by scanning articles, pulling trusted claims, and automatically linking to reputable sources or flagging contradictions.
 
 ---
 
@@ -114,33 +114,36 @@ A Grade-Prediction and Study-Strategy Platform that empowers students to take co
 By reducing guesswork, improving focus, and personalizing study planning, the platform makes academic progress more transparent and attainable 
 
 **Problem 3:** 
-Seniors often struggle to consistently manage their daily medications.
-* Many rely on weekly pill boxes, which do not provide reminders or track actual intake.
-* Complex regimens—different medicines at varying times and dosages—are prone to missed or double doses.
-* Family members and doctors have limited visibility into whether seniors are following their prescribed schedules.
-* When health metrics (e.g., TSH levels) fluctuate, it is difficult to determine whether poor medication adherence is a contributing factor.
+Food banks often struggle to efficiently source and coordinate food donations.
+* Donors may have food items to give away, but they don’t know which food banks are nearby or what items are most needed.
+* Food banks have limited visibility into local donation opportunities and spend time manually coordinating pickups/drop-offs.
+* Communication between donors and food banks is not very coordinated (emails, phone calls, social media posts).
+* Lack of verification for food banks and donors can lead to trust issues or wasted logistics efforts.
 
 **Solution 3:**
-A Senior-Friendly Medicine Scheduling and Adherence Platform
+A Community-Driven Food Bank Donation & Coordination Platform
 ***Key Features:***
-* Intuitive Dashboard: Seniors (or caregivers) can log medicines with photos, consumption instructions, dosage details, and upload the doctor’s prescription for reference.
-* Smart Reminders: Sends email/text alerts 10 minutes before medication times (default, adjustable by the user).
-* Acknowledgment System: Requires seniors to confirm that they’ve taken each dose, enabling accurate adherence records.
-* Dosage Tracking & Health Insights: Generates a timeline of intake history, helping caregivers and doctors correlate missed doses with health changes (e.g., spikes in TSH levels).
-* Exportable Reports: Allows users to export medication history in PDF or Excel format for clinic visits or ongoing monitoring.
-* Accessibility: Users will be able to easily sign up with their gmail account
-* Security: 2FA authentication when logging in
+* Create Donation Post: Donors can post available items with details (food type, quantity, expiration date, location).
+* Nearby Notifications: Automatically notifies nearby food banks when a new donation is posted.
+* Donation Scheduling: Food banks can message donors to arrange pickup or drop-off times.
+* Search & Filter: Food banks and donors can filter donations by food type, quantity, or proximity.
+* Profile Badges: Verified organizations and donors receive visible badges to build trust.
+* Map Integration: Google Maps API shows nearby food banks and donation locations for easy navigation.
 
 # Track 3: Creative Coding and Cultural Expression
 
 Idea:   Language learning using generative PDF translations
+
 Story:  Learning a new language is tough, and some study material is uninteresting. Allowing users to learn using their own material 
         would help boost their learning experience. They can upload any story they want where the pages will be parsed. The user would be able to
         select any words they don't know and get the translation and meaning.
+
 Inspo:  Linq + personal language learning experiences.
 
 Idea:   Connect to local artists
+
 Story:  Local artists can upload example works that they made, and people can connect to them or make requests. 
+
 Inspo:  Job boards + the "Creative" in Creative coding made me think of art.
 
 # Idea Finalization
@@ -178,10 +181,18 @@ Inspo:  Job boards + the "Creative" in Creative coding made me think of art.
 
 **Q5: What authentication method will you use (e.g., username/password, OAuth, JWT)?**
 
+*We will use simple OAuth to make sign-ups and logins quick and secure. OAuth is relatively easy to setup since it shifts most of the security burden to the trusted provider. This makes the platform more user-friendly and trustworthy, especially for donors and verified food banks.*
+
 **Q6: How will you store and protect sensitive user data (e.g., passwords, tokens)?**
+
+*Since we are using OAuth, we will not store raw passwords at all. Instead, we will securely store only the minimal information needed, such as OAuth tokens or user IDs, in the database. Tokens will be encrypted or stored with a secure library, and all communication with the server will be over HTTPS. Access tokens will be short-lived, and refresh tokens will be handled carefully to reduce the risk of unauthorized access.*
 
 ## Deployment
 
 **Q7: Where will you deploy your project (e.g., Heroku, AWS, Render)? How will you manage environment variables and secrets during deployment?**
 
+*We plan to deploy the frontend on Vercel, which is optimized for React applications, and connect it to a backend (e.g., Flask API) hosted on a cloud provider. Environment variables and API keys will be stored securely in Vercel’s built-in environment variable manager. This ensures secrets remain hidden from the codebase while still being accessible during runtime.*
+
 **Q8: How will you ensure your deployment is reliable and easy to update?**
+
+*Deployment will follow Vercel's protocol, so every update pushed to the main branch automatically triggers a new build and deployment. This ensures that fixes and new features can be delivered quickly. We will also use version control and branches to test before pushing live to avoid any unchecked bugs.*
