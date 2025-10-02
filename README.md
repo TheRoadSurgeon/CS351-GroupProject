@@ -92,12 +92,44 @@ Week of 12/01: Finalize everything. Clean up the code, test one last time, and g
 # Track 2: Technology for Public Goods 
 
 **Problem 2:**
+Students often struggle to understand what scores they need on upcoming assignments or exams to reach a desired final grade.
+* Syllabi vary by course and often contain complicated weightings that make manual calculations time-consuming.
+* Many students lack personalized study strategies and don’t know where to focus their efforts.
+* Uncertainty about grading curves and historical trends adds to the stress, leading to inefficient study plans and sometimes missed goals.
 
 **Solution 2:** 
+A Grade-Prediction and Study-Strategy Platform that empowers students to take control of their academic outcomes.
+***Key Features***
+* Dynamic Grade Calculator: Continuously computes the score needed on each upcoming assignment or exam to hit a target final grade.
+* Personalized Course Setup: Parses syllabus PDFs to auto-detect assignment types, weights, and grading rules.
+* Goal-Oriented Tracking: Lets students set grade goals and track progress visually.
+* AI-Powered Insights:
+    * Narrows down the range of plausible score combinations by considering historical trends, assignment difficulty, and typical curves.
+    * Suggests realistic study strategies by asking students about past study successes and their preferences (e.g., focusing more on projects vs. homework).
+    * Offers predictive insights like: “If you score 82% on the final, your course grade will likely rise by 4%.”
+    * Provides comparative benchmarks, e.g., “Class average so far suggests a likely curve of +2–3%.”
+***UI***
+* Dashboard: List of assignments, current scores, predicted needed scores.
+* “Our Take” Panel: AI-generated study strategies, highlighting where to focus time for maximum impact.
+By reducing guesswork, improving focus, and personalizing study planning, the platform makes academic progress more transparent and attainable 
 
 **Problem 3:** 
+Seniors often struggle to consistently manage their daily medications.
+* Many rely on weekly pill boxes, which do not provide reminders or track actual intake.
+* Complex regimens—different medicines at varying times and dosages—are prone to missed or double doses.
+* Family members and doctors have limited visibility into whether seniors are following their prescribed schedules.
+* When health metrics (e.g., TSH levels) fluctuate, it is difficult to determine whether poor medication adherence is a contributing factor.
 
-**Solution 3:**  
+**Solution 3:**
+A Senior-Friendly Medicine Scheduling and Adherence Platform
+***Key Features:***
+* Intuitive Dashboard: Seniors (or caregivers) can log medicines with photos, consumption instructions, dosage details, and upload the doctor’s prescription for reference.
+* Smart Reminders: Sends email/text alerts 10 minutes before medication times (default, adjustable by the user).
+* Acknowledgment System: Requires seniors to confirm that they’ve taken each dose, enabling accurate adherence records.
+* Dosage Tracking & Health Insights: Generates a timeline of intake history, helping caregivers and doctors correlate missed doses with health changes (e.g., spikes in TSH levels).
+* Exportable Reports: Allows users to export medication history in PDF or Excel format for clinic visits or ongoing monitoring.
+* Accessibility: Users will be able to easily sign up with their gmail account
+* Security: 2FA authentication when logging in
 
 # Track 3: Creative Coding and Cultural Expression
 
