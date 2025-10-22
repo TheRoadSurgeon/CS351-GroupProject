@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import Dashboard from "./pages/Dashboard";
 import FoodBanks from "./pages/FoodBanks";
 import Topbar from "./components/Topbar";
@@ -8,16 +10,25 @@ import './App.css';
 
 function App() 
 {
+  const [page, setPage] = useState("dashboard");
+
+  // TODO: move logo from sidebar to dashboard.
+
   return (
     <div id="app">
       <div>
-        <Sidebar />
+        <Sidebar
+          setPage={setPage}
+        />
       </div>
 
       <div id="mainAndNav">
-        <Topbar />
+        <Topbar 
+          page={page}
+        />
 
-        {/* <Dashboard /> */}
+        <Dashboard
+        />
         <div id="mainContent">
 
         </div>

@@ -11,7 +11,19 @@
 
 #topbar
 {
-    height: 20%;
+    padding-left: 20%;
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+    height: 20vh;
+    text-align: left;
+}
+
+#highlight
+{
+    padding: 1% 1%;
+    width: fit-content;
+    background-color: #6e75f7;
 }
 
 #sidebar
@@ -58,4 +70,20 @@
 #signout
 {
     margin-bottom: 10%;
+}
+
+
+#dashboard
+{
+    background-color: red;
+}
+
+#foodbanks
+{
+    background-color: green;
+}
+
+#leaderboard
+{
+    background-color: blue;
 }

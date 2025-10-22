@@ -1,7 +1,7 @@
+import 'react'
 import './components.css';
 
-function Sidebar() 
-{
+function Sidebar({setPage}) {
   return (
     <div id="sidebar">
 
@@ -11,9 +11,9 @@ function Sidebar()
         </div>
 
         <div id="sidebarbuttons">
-            <button>Dashboards</button>
-            <button>Foodbanks</button>
-            <button>Leaderboard</button>
+            <button onClick={() => setPage("dashboard") }   >Dashboards</button>
+            <button onClick={() => setPage("foodbank") }    >Foodbanks</button>
+            <button onClick={() => setPage("leaderboard")}  >Leaderboard</button>
         </div>      
 
         <div id="signout">

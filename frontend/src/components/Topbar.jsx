@@ -1,12 +1,14 @@
 import './components.css';
 
-function Topbar() 
+function Topbar({page}) 
 {
   return (
     <div id="topbar">
-        
-        {/* TODO: Display text of what page we're on. */}
 
+        <div id='highlight'>
+            <h1>{page}</h1>
+        </div>
+        
     </div>
   )
 }
