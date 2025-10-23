@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import Dashboard from "./pages/Dashboard";
 import FoodBanks from "./pages/FoodBanks";
-// import LeaderBoard from "./pages/Leaderboard";
+import LeaderBoard from "./pages/Leaderboard";
 import Topbar from "./components/Topbar";
 import Sidebar from "./components/Sidebar";
 
@@ -24,8 +24,8 @@ function App()
     case "foodbank":
       return <FoodBanks />
     
-    // case "leaderboard":
-    //   return <LeaderBoard/>
+    case "leaderboard":
+      return <LeaderBoard/>
 
     default:
       return <Dashboard />

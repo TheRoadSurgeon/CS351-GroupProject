@@ -1,0 +1,30 @@
+#leaderboard {
+  background: #f5f7fa;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+#leaderboard h1 {
+  color: #2c5530;
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 2.5em;
+  font-weight: 700;
+}
+
+.leaderboard-content {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.leaderboard-content p {
+  text-align: center;
+  color: #666;
+  font-size: 1.1em;
+  margin: 40px 0;
+}
