@@ -1,11 +1,11 @@
 import "./pages.css";
 
-function FoodBanks() 
+function Leaderboard() 
 {
   return (
-    <div id="foodbanks">
+    <div id="leaderboard">
 
-    
+
     </div>
   )
 }

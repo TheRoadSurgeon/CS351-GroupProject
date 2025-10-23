@@ -1,0 +1,73 @@
+
+#app
+{
+    display: flex;
+
+    width: 100%;
+
+    margin: 0;
+    padding: 0;
+}
+
+#topbar
+{
+    padding-left: 20%;
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+    height: 20vh;
+    text-align: left;
+}
+
+#highlight
+{
+    padding: 1% 1%;
+    width: fit-content;
+    background-color: #6e75f7;
+}
+
+#sidebar
+{
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-items: center;
+
+    height: 100%;
+    
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+
+#logo
+{
+    padding: 8.55% 0;
+    background-color: #535bf2;
+}
+
+
+#sidebarbuttons
+{
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+    align-items: center;
+}
+
+#sidebarbuttons button
+{
+    margin: 20% 20%;
+    padding: 20% 150%;
+
+    text-align: center;
+    justify-content: center;
+}
+
+
+#signout
+{
+    margin-bottom: 10%;
+}
