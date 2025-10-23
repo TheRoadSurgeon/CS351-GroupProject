@@ -1,0 +1,14 @@
+[
+{"id":"B1","name":"UIC Pantry","city":"Chicago","tags":["canned","fresh"],"refrigerated":true},
+{"id":"B2","name":"Pilsen Food Pantry","city":"Chicago","tags":["canned"],"refrigerated":false},
+{"id":"B3","name":"Lakeview Food Pantry","city":"Chicago","tags":["canned","fresh"],"refrigerated":true},
+{"id":"B4","name":"Greater Chicago Food Depository","city":"Chicago","tags":["distribution"],"refrigerated":true},
+{"id":"B5","name":"Rogers Park Community Fridge","city":"Chicago","tags":["fresh"],"refrigerated":true},
+{"id":"B6","name":"Englewood Community Kitchen","city":"Chicago","tags":["meals"],"refrigerated":true},
+{"id":"B7","name":"North Lawndale Food Hub","city":"Chicago","tags":["canned"],"refrigerated":false},
+{"id":"B8","name":"Logan Square Food Center","city":"Chicago","tags":["canned","fresh"],"refrigerated":true},
+{"id":"B9","name":"Bridgeport Food Share","city":"Chicago","tags":["canned"],"refrigerated":false},
+{"id":"B10","name":"Hyde Park Food Exchange","city":"Chicago","tags":["fresh"],"refrigerated":true},
+{"id":"B11","name":"Austin Community Pantry","city":"Chicago","tags":["canned"],"refrigerated":false},
+{"id":"B12","name":"Back of the Yards Food Bank","city":"Chicago","tags":["canned","fresh"],"refrigerated":true}
+]
