@@ -4,7 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import FoodBanks from "./pages/FoodBanks";
 import LeaderBoard from "./pages/Leaderboard";
 import Topbar from "./components/Topbar";
-import Sidebar from "./components/Sidebar";
+import Sidebar from "./components/SideBar";
 
 import './App.css';
 
@@ -13,18 +13,18 @@ import './App.css';
 
 function App() 
 {
-  const [page, setPage] = useState("dashboard");
+  const [page, setPage] = useState("Dashboard");
 
   const switchPage = (pg) => {
   switch(pg)
   {
-    case "dashboard":
+    case "Dashboard":
       return <Dashboard />
         
-    case "foodbank":
+    case "Food Banks":
       return <FoodBanks />
     
-    case "leaderboard":
+    case "Leaderboard":
       return <LeaderBoard/>
 
     default:
@@ -34,11 +34,10 @@ function App()
 
   return (
     <div id="app">
-      <div>
-        <Sidebar
-          setPage={setPage}
-        />
-      </div>
+      <Sidebar
+        setPage={setPage}
+        currentPage={page}
+      />
 
       <div id="mainAndNav">
         <Topbar 
@@ -46,8 +45,6 @@ function App()
         />
 
         <div id="mainContent">{switchPage(page)}</div>
-        
-        
       </div>
     </div>
   )
