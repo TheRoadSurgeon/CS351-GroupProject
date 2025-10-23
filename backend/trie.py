@@ -1,52 +1,143 @@
-# backend/trie.py
-from __future__ import annotations
 from collections import deque
-from typing import Dict, List, Set, Tuple
 
 class TrieNode:
-    __slots__ = ("children", "is_end", "ids")
-    def __init__(self) -> None:
-        self.children: Dict[str, TrieNode] = {}
-        self.is_end: bool = False
-        self.ids: Set[str] = set()
+    def __init__(self):
+        self.children = {}
+        self.isWord = False
+        self.ids = set()
 
 class Trie:
-    def __init__(self) -> None:
-        self.root: TrieNode = TrieNode()
+    def __init__(self):
+        self.insertDataMember = 0
+        self.root = TrieNode()
 
-    @staticmethod
-    def _norm(s: str) -> str:
-        return "".join(ch.lower() for ch in s if ch.isalnum() or ch.isspace())
+    def clean(self, s):
+        res = []
+        for ch in s:
+            if ch.isalpha() or ch.isspace():
+                res.append(ch.lower())
+        return "".join(res)
 
-    def insert(self, word: str, item_id: str) -> None:
-        w = self._norm(word)
-        node = self.root
+    def getFromFile(self, fname):
+        try:
+            with open(fname, "r", encoding="utf-8") as f:
+                for line in f:
+                    for tok in line.split():
+                        c = self.clean(tok)
+                        if c:
+                            self.insert(c)
+            return True
+        except OSError:
+            return False
+
+    def insert(self, word, item_id=None):
+        w = self.clean(word)
+        if not w:
+            return False
+        curr = self.root
         for ch in w:
-            if ch not in node.children:
-                node.children[ch] = TrieNode()
-            node = node.children[ch]
-        node.is_end = True
-        node.ids.add(item_id)
+            if ch not in curr.children:
+                curr.children[ch] = TrieNode()
+            curr = curr.children[ch]
+        new_word = not curr.isWord
+        if new_word:
+            curr.isWord = True
+            self.insertDataMember += 1
+        if item_id is not None:
+            before = len(curr.ids)
+            curr.ids.add(item_id)
+            return new_word or len(curr.ids) > before
+        return new_word
 
-    def _walk(self, node: TrieNode, prefix: str, limit: int) -> List[str]:
-        out: List[str] = []
-        dq: deque[Tuple[TrieNode, str]] = deque([(node, prefix)])
-        while dq and len(out) < limit:
-            cur, _ = dq.popleft()
-            if cur.is_end:
-                for _id in cur.ids:
-                    out.append(_id)
-                    if len(out) >= limit:
-                        break
-            for ch in sorted(cur.children.keys()):
-                dq.append((cur.children[ch], prefix + ch))
+    def search(self, word):
+        w = self.clean(word)
+        curr = self.root
+        for ch in w:
+            if ch not in curr.children:
+                return False
+            curr = curr.children[ch]
+        return curr.isWord
+
+    def remove(self, word, item_id=None):
+        w = self.clean(word)
+        curr = self.root
+        for ch in w:
+            if ch not in curr.children:
+                return False
+            curr = curr.children[ch]
+        if not curr.isWord:
+            return False
+        if item_id is not None:
+            if item_id in curr.ids:
+                curr.ids.remove(item_id)
+                if not curr.ids:
+                    curr.isWord = False
+                    self.insertDataMember -= 1
+                return True
+            return False
+        curr.isWord = False
+        curr.ids.clear()
+        self.insertDataMember -= 1
+        return True
+
+    def clear(self):
+        self.root = TrieNode()
+        self.insertDataMember = 0
+        return True
+
+    def wordCount(self):
+        return self.insertDataMember
+
+    def words(self):
+        out = []
+        def dfs(node, seq):
+            if node.isWord:
+                out.append(seq)
+            for ch in sorted(node.children.keys()):
+                dfs(node.children[ch], seq + ch)
+        dfs(self.root, "")
         return out
 
-    def prefix_ids(self, prefix: str, limit: int = 20) -> List[str]:
-        p = self._norm(prefix)
-        node = self.root
+    def check_all_ids(self, node, limit):
+        out = []
+        dq = deque([node])
+        seen = set()
+        while dq and len(out) < limit:
+            cur = dq.popleft()
+            if cur.isWord:
+                for _id in cur.ids:
+                    if _id not in seen:
+                        out.append(_id)
+                        seen.add(_id)
+                        if len(out) >= limit:
+                            break
+            for child in cur.children.values():
+                dq.append(child)
+        return out
+
+    def words_with_prefix(self, prefix, limit=None):
+        p = self.clean(prefix)
+        curr = self.root
         for ch in p:
-            if ch not in node.children:
+            if ch not in curr.children:
                 return []
-            node = node.children[ch]
-        return self._walk(node, p, limit)
+            curr = curr.children[ch]
+        res = []
+        def dfs(node, seq):
+            if limit is not None and len(res) >= limit:
+                return
+            if node.isWord:
+                res.append(seq)
+            for ch in sorted(node.children.keys()):
+                dfs(node.children[ch], seq + ch)
+        dfs(curr, p)
+        return res
+
+    def prefix_ids(self, prefix, limit=20):
+        p = self.clean(prefix)
+        curr = self.root
+        for ch in p:
+            if ch not in curr.children:
+                return []
+            curr = curr.children[ch]
+        return self.check_all_ids(curr, limit)
