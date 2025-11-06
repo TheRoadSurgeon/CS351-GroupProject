@@ -44,3 +44,5 @@ frontend/pnpm-debug.log*
 *.log
 logs/
 
+
+venv/
