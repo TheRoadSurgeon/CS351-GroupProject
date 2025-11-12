@@ -29,6 +29,12 @@ function Sidebar({setPage, currentPage}) {
             >
               Leaderboard
             </button>
+            <button 
+              onClick={() => setPage("Donation Form")}
+              className={currentPage === "Donation Form" ? "active" : ""}  
+            >
+              Donation Form
+            </button>
         </div>    
 
         <div id="signout">
