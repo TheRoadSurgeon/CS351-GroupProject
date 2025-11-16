@@ -1,0 +1,519 @@
+diff --git a/frontend/src/App.jsx b/frontend/src/App.jsx
+index 0389644..835420e 100644
+--- a/frontend/src/App.jsx
++++ b/frontend/src/App.jsx
+@@ -1,7 +1,6 @@
+ import { useState } from "react";
+-import { BrowserRouter, Routes, Route} from "react-router-dom";
+-
+-import Dashboard from "./pages/Dashboard";
++import DashboardDonor from "./pages/DashboardDonor";
++import DashboardFoodBank from "./pages/DashboardFoodBank";
+ import FoodBanks from "./pages/FoodBanks";
+ import LeaderBoard from "./pages/Leaderboard";
+ import Topbar from "./components/Topbar";
+@@ -13,19 +12,16 @@ import DonationForm from "./pages/DonationForm";
+ 
+ import './App.css';
+ 
+-// TODO: move logo from sidebar to dashboard.
+-// TODO: Add leaderboard to the options
+-
+ export default function App() 
+ {
+-  const [page, setPage] = useState("Dashboard");
++  const [page, setPage] = useState("Dashboard"); //should be either donor or foodbank, need to change it 
+ 
+   const switchPage = (pg) => {
+     console.log("switchPage →", pg);
+     switch(pg)
+     {
+       case "Dashboard":
+-        return <Dashboard />
++        return <DashboardDonor />
+           
+       case "Food Banks":
+         return <FoodBanks />
+@@ -37,7 +33,7 @@ export default function App()
+         return <DonationForm />
+ 
+       default:
+-        return <Dashboard />
++        return <DashboardDonor />
+     }
+ }
+ 
+diff --git a/frontend/src/pages/Dashboard.css b/frontend/src/pages/Dashboard.css
+deleted file mode 100644
+index e8522dc..0000000
+--- a/frontend/src/pages/Dashboard.css
++++ /dev/null
+@@ -1,300 +0,0 @@
+-#dashboard {
+-  padding: 0;
+-  margin: 0;
+-  background: transparent;
+-  width: 100%;
+-}
+-
+-.page-header {
+-  padding: 20px 30px;
+-  border-bottom: 1px solid #eee;
+-  background: white;
+-}
+-
+-.user-type-selector {
+-  display: inline-flex;
+-  background: #f5f5f5;
+-  border-radius: 6px;
+-  padding: 4px;
+-}
+-
+-.user-type-selector button {
+-  padding: 8px 16px;
+-  border: none;
+-  background: transparent;
+-  border-radius: 4px;
+-  cursor: pointer;
+-  transition: all 0.2s ease;
+-  font-size: 14px;
+-  color: #666;
+-}
+-
+-.user-type-selector button.active {
+-  background: #4a7c59;
+-  color: white;
+-}
+-
+-.actions-row {
+-  padding: 20px 30px;
+-  display: flex;
+-  gap: 12px;
+-  background: #fafafa;
+-  border-bottom: 1px solid #eee;
+-}
+-
+-.action-btn {
+-  padding: 10px 20px;
+-  border-radius: 6px;
+-  border: none;
+-  cursor: pointer;
+-  font-size: 14px;
+-  transition: all 0.2s ease;
+-}
+-
+-.action-btn.primary {
+-  background: #4a7c59;
+-  color: white;
+-}
+-
+-.action-btn.primary:hover {
+-  background: #3a6449;
+-}
+-
+-.action-btn.secondary {
+-  background: white;
+-  color: #4a7c59;
+-  border: 1px solid #4a7c59;
+-}
+-
+-.action-btn.secondary:hover {
+-  background: #4a7c59;
+-  color: white;
+-}
+-
+-.dashboard-grid {
+-  display: grid;
+-  grid-template-columns: 1fr 320px;
+-  gap: 0;
+-  min-height: calc(100vh - 200px);
+-}
+-
+-.main-content {
+-  padding: 30px;
+-  background: white;
+-}
+-
+-.content-header {
+-  display: flex;
+-  justify-content: space-between;
+-  align-items: center;
+-  margin-bottom: 25px;
+-}
+-
+-.content-header h2 {
+-  margin: 0;
+-  color: #333;
+-  font-size: 1.5em;
+-}
+-
+-.filters {
+-  display: flex;
+-  gap: 10px;
+-}
+-
+-.filters select {
+-  padding: 8px 12px;
+-  border: 1px solid #ddd;
+-  border-radius: 4px;
+-  background: white;
+-  font-size: 14px;
+-}
+-
+-.items-list {
+-  display: flex;
+-  flex-direction: column;
+-  gap: 15px;
+-}
+-
+-.item-card {
+-  display: flex;
+-  justify-content: space-between;
+-  align-items: center;
+-  padding: 20px;
+-  border: 1px solid #eee;
+-  border-radius: 8px;
+-  background: #fafafa;
+-  transition: all 0.2s ease;
+-}
+-
+-.item-card:hover {
+-  background: #f0f0f0;
+-  border-color: #4a7c59;
+-}
+-
+-.item-info h3 {
+-  margin: 0 0 8px 0;
+-  color: #333;
+-  font-size: 1.1em;
+-}
+-
+-.verified {
+-  background: #4CAF50;
+-  color: white;
+-  border-radius: 50%;
+-  width: 18px;
+-  height: 18px;
+-  display: inline-flex;
+-  align-items: center;
+-  justify-content: center;
+-  font-size: 10px;
+-  margin-left: 8px;
+-}
+-
+-.distance,
+-.location {
+-  color: #666;
+-  font-size: 14px;
+-  margin: 4px 0;
+-}
+-
+-.needs {
+-  color: #666;
+-  font-style: italic;
+-  font-size: 14px;
+-  margin: 8px 0 0 0;
+-}
+-
+-.details {
+-  display: flex;
+-  flex-direction: column;
+-  gap: 4px;
+-  font-size: 14px;
+-  color: #666;
+-  margin-top: 8px;
+-}
+-
+-.contact-btn {
+-  background: #ff9800;
+-  color: white;
+-  border: none;
+-  padding: 10px 20px;
+-  border-radius: 6px;
+-  cursor: pointer;
+-  font-size: 14px;
+-  transition: background 0.2s ease;
+-}
+-
+-.contact-btn:hover {
+-  background: #e68900;
+-}
+-
+-.dashboard-sidebar {
+-  background: #f8f9fa;
+-  border-left: 1px solid #eee;
+-  padding: 20px;
+-  display: flex;
+-  flex-direction: column;
+-  gap: 25px;
+-}
+-
+-.sidebar-section h3 {
+-  margin: 0 0 15px 0;
+-  color: #333;
+-  font-size: 1.1em;
+-}
+-
+-.activity-list {
+-  display: flex;
+-  flex-direction: column;
+-  gap: 12px;
+-}
+-
+-.activity-item {
+-  padding: 12px;
+-  background: white;
+-  border-radius: 6px;
+-  border: 1px solid #eee;
+-}
+-
+-.activity-item p {
+-  margin: 0 0 6px 0;
+-  font-size: 14px;
+-  color: #333;
+-}
+-
+-.time {
+-  font-size: 12px;
+-  color: #999;
+-}
+-
+-.map-preview {
+-  padding: 20px;
+-  background: white;
+-  border: 1px solid #eee;
+-  border-radius: 6px;
+-  text-align: center;
+-}
+-
+-.map-btn {
+-  background: #2196F3;
+-  color: white;
+-  border: none;
+-  padding: 8px 16px;
+-  border-radius: 4px;
+-  cursor: pointer;
+-  font-size: 14px;
+-  margin-top: 10px;
+-}
+-
+-.stats {
+-  display: grid;
+-  grid-template-columns: repeat(3, 1fr);
+-  gap: 10px;
+-}
+-
+-.stat {
+-  text-align: center;
+-  padding: 12px 8px;
+-  background: white;
+-  border-radius: 6px;
+-  border: 1px solid #eee;
+-}
+-
+-.stat .number {
+-  display: block;
+-  font-size: 1.6em;
+-  font-weight: bold;
+-  color: #4a7c59;
+-  margin-bottom: 4px;
+-}
+-
+-.stat .label {
+-  font-size: 11px;
+-  color: #666;
+-  text-transform: uppercase;
+-}
+-
+-@media (max-width: 768px) {
+-  .dashboard-grid {
+-    grid-template-columns: 1fr;
+-  }
+-  
+-  .actions-row {
+-    flex-direction: column;
+-  }
+-  
+-  .content-header {
+-    flex-direction: column;
+-    gap: 15px;
+-    align-items: flex-start;
+-  }
+-  
+-  .stats {
+-    grid-template-columns: 1fr;
+-  }
+-  
+-  .dashboard-sidebar {
+-    border-left: none;
+-    border-top: 1px solid #eee;
+-  }
+-}
+\ No newline at end of file
+diff --git a/frontend/src/pages/Dashboard.jsx b/frontend/src/pages/Dashboard.jsx
+deleted file mode 100644
+index aed1450..0000000
+--- a/frontend/src/pages/Dashboard.jsx
++++ /dev/null
+@@ -1,160 +0,0 @@
+-import { useState, useEffect } from 'react';
+-import "./Dashboard.css";
+-
+-function Dashboard() {
+-  const [userType, setUserType] = useState('donor');
+-  const [donations, setDonations] = useState([]);
+-  const [nearbyFoodBanks, setNearbyFoodBanks] = useState([]);
+-  const [notifications, setNotifications] = useState([]);
+-
+-  useEffect(() => {
+-    setDonations([
+-      { id: 1, type: 'Canned Goods', quantity: '50 cans', location: '2.3 miles away', expires: '2025-12-15', donor: 'Local Grocery Store', verified: true },
+-      { id: 2, type: 'Fresh Produce', quantity: '20 lbs', location: '1.1 miles away', expires: '2025-10-25', donor: 'Community Garden', verified: true },
+-      { id: 3, type: 'Bread & Bakery', quantity: '30 loaves', location: '0.8 miles away', expires: '2025-10-24', donor: 'Downtown Bakery', verified: false }
+-    ]);
+-
+-    setNearbyFoodBanks([
+-      { id: 1, name: 'Central Food Bank', distance: '1.2 miles', needs: ['Canned Goods', 'Rice'], verified: true },
+-      { id: 2, name: 'Community Kitchen', distance: '2.1 miles', needs: ['Fresh Produce', 'Dairy'], verified: true }
+-    ]);
+-
+-    setNotifications([
+-      { id: 1, message: 'New donation posted: Fresh Produce nearby', time: '2 hours ago' },
+-      { id: 2, message: 'Central Food Bank requested pickup for your canned goods', time: '4 hours ago' }
+-    ]);
+-  }, []);
+-
+-  return (
+-    <div id="dashboard">
+-      <div className="page-header">
+-        <div className="user-type-selector">
+-          <button 
+-            className={userType === 'donor' ? 'active' : ''} 
+-            onClick={() => setUserType('donor')}
+-          >
+-            I'm a Donor
+-          </button>
+-          <button 
+-            className={userType === 'foodbank' ? 'active' : ''} 
+-            onClick={() => setUserType('foodbank')}
+-          >
+-            I'm a Food Bank
+-          </button>
+-        </div>
+-      </div>
+-
+-      <div className="actions-row">
+-        {userType === 'donor' ? (
+-          <>
+-            <button className="action-btn primary">+ Create Donation Post</button>
+-            <button className="action-btn secondary">View My Donations</button>
+-            <button className="action-btn secondary">Find Nearby Food Banks</button>
+-          </>
+-        ) : (
+-          <>
+-            <button className="action-btn primary">Search Donations</button>
+-            <button className="action-btn secondary">Update Our Needs</button>
+-            <button className="action-btn secondary">Schedule Pickups</button>
+-          </>
+-        )}
+-      </div>
+-
+-      <div className="dashboard-grid">
+-        <div className="main-content">
+-          <div className="content-header">
+-            <h2>{userType === 'donor' ? 'Nearby Food Banks' : 'Available Donations'}</h2>
+-            <div className="filters">
+-              <select>
+-                <option>All Types</option>
+-                <option>Canned Goods</option>
+-                <option>Fresh Produce</option>
+-                <option>Dairy</option>
+-                <option>Bread & Bakery</option>
+-              </select>
+-              <select>
+-                <option>Within 5 miles</option>
+-                <option>Within 2 miles</option>
+-                <option>Within 1 mile</option>
+-              </select>
+-            </div>
+-          </div>
+-
+-          <div className="items-list">
+-            {userType === 'donor' ? (
+-              nearbyFoodBanks.map(bank => (
+-                <div key={bank.id} className="item-card">
+-                  <div className="item-info">
+-                    <h3>{bank.name} {bank.verified && <span className="verified">✓</span>}</h3>
+-                    <p className="distance">{bank.distance}</p>
+-                    <p className="needs">Currently needs: {bank.needs.join(', ')}</p>
+-                  </div>
+-                  <button className="contact-btn">Contact</button>
+-                </div>
+-              ))
+-            ) : (
+-              donations.map(donation => (
+-                <div key={donation.id} className="item-card">
+-                  <div className="item-info">
+-                    <h3>{donation.type} {donation.verified && <span className="verified">✓</span>}</h3>
+-                    <p className="location">{donation.location}</p>
+-                    <div className="details">
+-                      <span>Quantity: {donation.quantity}</span>
+-                      <span>Expires: {donation.expires}</span>
+-                      <span>Donor: {donation.donor}</span>
+-                    </div>
+-                  </div>
+-                  <button className="contact-btn">Request Pickup</button>
+-                </div>
+-              ))
+-            )}
+-          </div>
+-        </div>
+-
+-        <div className="dashboard-sidebar">
+-          
+-          <div className="sidebar-section">
+-            <h3>Recent Activity</h3>
+-            <div className="activity-list">
+-              {notifications.map(notification => (
+-                <div key={notification.id} className="activity-item">
+-                  <p>{notification.message}</p>
+-                  <span className="time">{notification.time}</span>
+-                </div>
+-              ))}
+-            </div>
+-          </div>
+-
+-          <div className="sidebar-section">
+-            <h3>Map View</h3>
+-            <div className="map-preview">
+-              <p>🗺️ Interactive map</p>
+-              <button className="map-btn">View Full Map</button>
+-            </div>
+-          </div>
+-
+-          <div className="sidebar-section">
+-            <h3>Your Impact</h3>
+-            <div className="stats">
+-              <div className="stat">
+-                <span className="number">12</span>
+-                <span className="label">Donations</span>
+-              </div>
+-              <div className="stat">
+-                <span className="number">450</span>
+-                <span className="label">Meals</span>
+-              </div>
+-              <div className="stat">
+-                <span className="number">8</span>
+-                <span className="label">Food Banks</span>
+-              </div>
+-            </div>
+-          </div>
+-
+-        </div>
+-      </div>
+-    </div>
+-  )
+-}
+-
+-export default Dashboard
+\ No newline at end of file
