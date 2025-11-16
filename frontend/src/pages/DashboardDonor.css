@@ -73,7 +73,7 @@
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr;
   gap: 0;
   min-height: calc(100vh - 200px);
 }
@@ -85,8 +85,9 @@
 
 .content-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 15px;
+  align-items: flex-start;
   margin-bottom: 25px;
 }
 
@@ -97,8 +98,7 @@
 }
 
 .filters {
-  display: flex;
-  gap: 10px;
+  align-self: flex-end;
 }
 
 .filters select {
@@ -106,6 +106,7 @@
   border: 1px solid #ddd;
   border-radius: 4px;
   background: white;
+  color: #333;
   font-size: 14px;
 }
 
@@ -126,6 +127,16 @@
   transition: all 0.2s ease;
 }
 
+.item-card.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.item-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 .item-card:hover {
   background: #f0f0f0;
   border-color: #4a7c59;
@@ -135,6 +146,113 @@
   margin: 0 0 8px 0;
   color: #333;
   font-size: 1.1em;
+}
+
+.item-count {
+  color: #4a7c59;
+  font-size: 14px;
+  margin: 8px 0 0 0;
+  font-weight: 600;
+}
+
+/* Urgency badges */
+.urgency-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 600;
+  margin-left: 12px;
+  text-transform: uppercase;
+}
+
+.urgency-badge.high {
+  background: #fee;
+  color: #c33;
+}
+
+.urgency-badge.medium {
+  background: #ffeaa7;
+  color: #d63031;
+}
+
+.urgency-badge.low {
+  background: #dfe6e9;
+  color: #636e72;
+}
+
+/* Quantity */
+.quantity {
+  color: #666;
+  font-size: 14px;
+  margin: 4px 0;
+  font-weight: 500;
+}
+
+/* View items button */
+.view-items-btn {
+  background: #4a7c59;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.view-items-btn:hover {
+  background: #3a6449;
+}
+
+/* Donate button */
+.donate-btn {
+  background: #4a7c59;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.donate-btn:hover {
+  background: #4a7c59;
+}
+
+/* Back button */
+.back-btn {
+  background: transparent;
+  color: #4a7c59;
+  border: 1px solid #4a7c59;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  margin-bottom: 15px;
+}
+
+.back-btn:hover {
+  background: #4a7c59;
+  color: white;
+}
+
+.content-header .back-btn {
+  align-self: flex-start;
+}
+
+/* No items message */
+.no-items {
+  text-align: center;
+  color: #999;
+  font-size: 1.1em;
+  padding: 40px;
+  font-style: italic;
 }
 
 .verified {

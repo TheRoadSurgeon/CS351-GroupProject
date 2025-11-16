@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { BrowserRouter, Routes, Route} from "react-router-dom";
-
-import Dashboard from "./pages/Dashboard";
+import DashboardDonor from "./pages/DashboardDonor";
+import DashboardFoodBank from "./pages/DashboardFoodBank";
 import FoodBanks from "./pages/FoodBanks";
 import LeaderBoard from "./pages/Leaderboard";
 import Topbar from "./components/Topbar";
@@ -13,19 +12,16 @@ import DonationForm from "./pages/DonationForm";
 
 import './App.css';
 
-// TODO: move logo from sidebar to dashboard.
-// TODO: Add leaderboard to the options
-
 export default function App() 
 {
-  const [page, setPage] = useState("Dashboard");
+  const [page, setPage] = useState("Dashboard"); //should be either donor or foodbank, need to change it 
 
   const switchPage = (pg) => {
     console.log("switchPage →", pg);
     switch(pg)
     {
       case "Dashboard":
-        return <Dashboard />
+        return <DashboardDonor />
           
       case "Food Banks":
         return <FoodBanks />
@@ -37,7 +33,7 @@ export default function App()
         return <DonationForm />
 
       default:
-        return <Dashboard />
+        return <DashboardDonor />
     }
 }
 
