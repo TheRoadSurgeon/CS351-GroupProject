@@ -1,0 +1,405 @@
+#dashboard {
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  width: 100%;
+}
+
+.page-header {
+  padding: 20px 30px;
+  border-bottom: 1px solid #eee;
+  background: white;
+}
+
+.user-type-selector {
+  display: inline-flex;
+  background: #f5f5f5;
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.user-type-selector button {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  color: #666;
+}
+
+.user-type-selector button.active {
+  background: #4a7c59;
+  color: white;
+}
+
+.actions-row {
+  padding: 20px 30px;
+  display: flex;
+  gap: 12px;
+  background: #fafafa;
+  border-bottom: 1px solid #eee;
+}
+
+.action-btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.action-btn.primary {
+  background: #4a7c59;
+  color: white;
+}
+
+.action-btn.primary:hover {
+  background: #3a6449;
+}
+
+.action-btn.secondary {
+  background: white;
+  color: #4a7c59;
+  border: 1px solid #4a7c59;
+}
+
+.action-btn.secondary:hover {
+  background: #4a7c59;
+  color: white;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  min-height: calc(100vh - 200px);
+}
+
+.main-content {
+  padding: 30px;
+  background: white;
+}
+
+.content-header {
+  display: flex;
+  flex-direction: column; 
+  gap: 15px;
+  align-items: flex-start;
+  margin-bottom: 25px;
+}
+
+.content-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5em;
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+  align-self: flex-end; 
+}
+
+
+.filters select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  color: #333;
+  font-size: 14px;
+}
+
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.item-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: all 0.2s ease;
+}
+
+.item-card:hover {
+  background: #f0f0f0;
+  border-color: #4a7c59;
+}
+
+.item-info h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 1.1em;
+}
+
+.verified {
+  background: #4CAF50;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  margin-left: 8px;
+}
+
+.distance,
+.location {
+  color: #666;
+  font-size: 14px;
+  margin: 4px 0;
+}
+
+.needs {
+  color: #666;
+  font-style: italic;
+  font-size: 14px;
+  margin: 8px 0 0 0;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: #666;
+  margin-top: 8px;
+}
+
+.contact-btn {
+  background: #ff9800;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s ease;
+}
+
+.contact-btn:hover {
+  background: #e68900;
+}
+
+.dashboard-sidebar {
+  background: #f8f9fa;
+  border-left: 1px solid #eee;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.sidebar-section h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 1.1em;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.activity-item {
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #eee;
+}
+
+.activity-item p {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.time {
+  font-size: 12px;
+  color: #999;
+}
+
+.map-preview {
+  padding: 20px;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.map-btn {
+  background: #2196F3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.stat {
+  text-align: center;
+  padding: 12px 8px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #eee;
+}
+
+.stat .number {
+  display: block;
+  font-size: 1.6em;
+  font-weight: bold;
+  color: #4a7c59;
+  margin-bottom: 4px;
+}
+
+.stat .label {
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+}
+
+
+.item-card.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.item-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Urgency badges */
+.urgency-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 600;
+  margin-left: 12px;
+  text-transform: uppercase;
+}
+
+.urgency-badge.high {
+  background: #fee;
+  color: #c33;
+}
+
+.urgency-badge.medium {
+  background: #ffeaa7;
+  color: #d63031;
+}
+
+.urgency-badge.low {
+  background: #dfe6e9;
+  color: #636e72;
+}
+
+/* Quantity and donor count */
+.quantity {
+  color: #666;
+  font-size: 14px;
+  margin: 4px 0;
+  font-weight: 500;
+}
+
+.donor-count {
+  color: #4a7c59;
+  font-size: 14px;
+  margin: 8px 0 0 0;
+  font-weight: 600;
+}
+
+/* View donors button */
+.view-donors-btn {
+  background: #4a7c59;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.view-donors-btn:hover {
+  background: #3a6449;
+}
+
+/* Back button */
+.back-btn {
+  background: transparent;
+  color: #4a7c59;
+  border: 1px solid #4a7c59;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  margin-bottom: 15px;
+}
+
+.back-btn:hover {
+  background: #4a7c59;
+  color: white;
+}
+
+.content-header .back-btn {
+  align-self: flex-start;
+}
+
+/* No donors message */
+.no-donors {
+  text-align: center;
+  color: #999;
+  font-size: 1.1em;
+  padding: 40px;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .actions-row {
+    flex-direction: column;
+  }
+  
+  .content-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+  
+  .stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-sidebar {
+    border-left: none;
+    border-top: 1px solid #eee;
+  }
+}
