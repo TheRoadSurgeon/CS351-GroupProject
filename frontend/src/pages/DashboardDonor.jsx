@@ -5,6 +5,14 @@ function DashboardDonor() {
   const [nearbyFoodBanks, setNearbyFoodBanks] = useState([]);
   const [selectedFoodBank, setSelectedFoodBank] = useState(null);
   const [foodItemsNeeded, setFoodItemsNeeded] = useState([]);
+  const [showDonationModal, setShowDonationModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [donationForm, setDonationForm] = useState({
+    name: '',
+    dateOfBirth: '',
+    amount: '',
+    donationTime: ''
+  });
 
   useEffect(() => {
     // Mock data: Nearby food banks
@@ -48,6 +56,35 @@ function DashboardDonor() {
     setFoodItemsNeeded([]);
   };
 
+  const handleDonateClick = (item) => {
+    setSelectedItem(item);
+    setShowDonationModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowDonationModal(false);
+    setSelectedItem(null);
+    setDonationForm({
+      name: '',
+      dateOfBirth: '',
+      amount: '',
+      donationTime: ''
+    });
+  };
+
+  const handleFormChange = (e) => {
+    setDonationForm({
+      ...donationForm,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log('Donation submitted:', donationForm);
+    handleCloseModal();
+  };
+
   return (
     <div id="dashboard">
       <div className="dashboard-grid">
@@ -86,7 +123,6 @@ function DashboardDonor() {
               </div>
             </>
           ) : (
-            /* Show food items needed by selected food bank */
             <>
               <div className="content-header">
                 <button className="back-btn" onClick={handleBackToFoodBanks}>
@@ -108,7 +144,12 @@ function DashboardDonor() {
                         </h3>
                         <p className="quantity">Need: {item.quantityNeeded}</p>
                       </div>
-                      <button className="donate-btn">Donate This Item</button>
+                      <button 
+                        className="donate-btn"
+                        onClick={() => handleDonateClick(item)}
+                      >
+                        Donate This Item
+                      </button>
                     </div>
                   ))
                 ) : (
@@ -119,6 +160,71 @@ function DashboardDonor() {
           )}
         </div>
       </div>
+
+      {showDonationModal && selectedItem && (
+        <div className="modal-overlay" onClick={handleCloseModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Donate {selectedItem.name}</h2>
+              <button className="close-btn" onClick={handleCloseModal}>×</button>
+            </div>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label htmlFor="name">Full Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={donationForm.name}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="dateOfBirth">Date of Birth</label>
+                <input
+                  type="date"
+                  id="dateOfBirth"
+                  name="dateOfBirth"
+                  value={donationForm.dateOfBirth}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="amount">Amount of {selectedItem.name} (in pounds)</label>
+                <input
+                  type="number"
+                  id="amount"
+                  name="amount"
+                  value={donationForm.amount}
+                  onChange={handleFormChange}
+                  min="0"
+                  step="0.1"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="donationTime">Preferred Drop-off Date & Time</label>
+                <input
+                  type="datetime-local"
+                  id="donationTime"
+                  name="donationTime"
+                  value={donationForm.donationTime}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+
+              <button type="submit" className="submit-btn">Submit Donation</button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
