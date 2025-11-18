@@ -48,7 +48,7 @@ function MainApp()
     switch(pg)
     {
       case "Dashboard":
-        return <DashboardDonor />
+        return <DashboardFoodBank />
           
       case "Food Banks":
         return <FoodBanks />
