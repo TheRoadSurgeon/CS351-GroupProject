@@ -58,14 +58,12 @@ export default function Register() {
       return
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       setError('Please enter a valid email address')
       return
     }
 
-    // Validate phone number (10 digits, with optional formatting)
     const phoneRegex = /^[\d\s\-\(\)]{10,}$/
     const digitsOnly = phone.replace(/\D/g, '')
     if (digitsOnly.length !== 10) {
@@ -73,14 +71,12 @@ export default function Register() {
       return
     }
 
-    // Validate state (2-letter code)
     const stateRegex = /^[A-Z]{2}$/i
     if (!stateRegex.test(state)) {
       setError('State must be a 2-letter code (e.g., IL, CA, NY)')
       return
     }
 
-    // Validate zip code (5 digits or 5+4 format)
     const zipRegex = /^\d{5}(-\d{4})?$/
     if (!zipRegex.test(postalCode)) {
       setError('Zip code must be 5 digits (e.g., 60616) or 5+4 format (e.g., 60616-1234)')
@@ -103,9 +99,11 @@ export default function Register() {
       phone,
       address,
       city,
-      state: state.toUpperCase(), // Ensure state is uppercase
+      state: state.toUpperCase(),
       postalCode,
-      ...(role === 'Donor' ? { firstName, lastName } : { foodBankName })
+      ...(role === 'Donor' 
+        ? { first_name: firstName, last_name: lastName } 
+        : { name: foodBankName })
     }
 
     const { data, error } = await signUp(email, password, role, additionalData)

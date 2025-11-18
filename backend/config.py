@@ -27,6 +27,14 @@ app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JSON_SORT_KEYS"] = False
 
+# Add connection pool settings to prevent connection drops
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,  # Test connections before using them
+    "pool_recycle": 300,     # Recycle connections after 5 minutes
+    "pool_size": 10,         # Number of connections to maintain
+    "max_overflow": 5,       # Additional connections if pool is full
+}
+
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 db = SQLAlchemy(app)
