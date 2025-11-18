@@ -10,20 +10,49 @@ function DashboardDonor() {
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [donationForm, setDonationForm] = useState({
     name: '',
     dateOfBirth: '',
     amount: '',
     donationTime: ''
   });
+  const [meetingDate, setMeetingDate] = useState('');
+  const [meetingTime, setMeetingTime] = useState('');
 
   useEffect(() => {
-    // Mock data: Nearby food banks
-    setNearbyFoodBanks([
-      { id: 1, name: 'Central Food Bank', distance: '1.2 miles', verified: true, itemCount: 4 },
-      { id: 2, name: 'Community Kitchen', distance: '2.1 miles', verified: true, itemCount: 3 },
-      { id: 3, name: 'Hope Center', distance: '3.5 miles', verified: false, itemCount: 5 }
-    ]);
+    const fetchFoodBanks = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch('http://127.0.0.1:5000/api/food_banks');
+        if (!response.ok) {
+          throw new Error('Failed to fetch food banks');
+        }
+        
+        const data = await response.json();
+
+        // Transform the data to match the expected format
+        const transformedData = data.food_banks.map(bank => ({
+          id: bank.id,
+          name: bank.name,
+          distance: 'N/A', // Need distance calculation
+          verified: true, // Need verification status
+          itemCount: 0 // Need to fetch actual item count
+        }));
+
+        setNearbyFoodBanks(transformedData);
+      } catch (error) {
+        console.error('Error fetching food banks:', error);
+        setError('Failed to load food banks. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFoodBanks();
   }, []);
 
   useEffect(() => {
@@ -88,24 +117,13 @@ function DashboardDonor() {
   const handleCloseModal = () => {
     setShowDonationModal(false);
     setSelectedItem(null);
-    setDonationForm({
-      name: '',
-      dateOfBirth: '',
-      amount: '',
-      donationTime: ''
-    });
+    setMeetingDate('');
+    setMeetingTime('');
   };
 
-  const handleFormChange = (e) => {
-    setDonationForm({
-      ...donationForm,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSubmit = (e) => {
+  const handleConfirm = (e) => {
     e.preventDefault();
-    console.log('Donation submitted:', donationForm);
+    console.log('Meeting scheduled:', { item: selectedItem, meetingDate, meetingTime });
     handleCloseModal();
   };
 
@@ -117,7 +135,6 @@ function DashboardDonor() {
   const handleSuggestionClick = (suggestion) => {
     setSearchTerm(suggestion);
     setShowSuggestions(false);
-    // Trigger search with the selected suggestion
     searchPostings(suggestion);
   };
 
@@ -128,7 +145,6 @@ function DashboardDonor() {
       const response = await fetch(`http://127.0.0.1:5000/api/search/postings?q=${encodeURIComponent(query)}`);
       const data = await response.json();
       console.log('Search results:', data.postings);
-      // You can use these results to filter or display items
     } catch (error) {
       console.error('Error searching postings:', error);
     }
@@ -250,66 +266,41 @@ function DashboardDonor() {
         </div>
       </div>
 
+      {/* Meeting Time Modal */}
       {showDonationModal && selectedItem && (
         <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content small-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Donate {selectedItem.name}</h2>
+              <h2>Schedule Donation</h2>
               <button className="close-btn" onClick={handleCloseModal}>×</button>
             </div>
             
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleConfirm}>
               <div className="form-group">
-                <label htmlFor="name">Full Name</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={donationForm.name}
-                  onChange={handleFormChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="dateOfBirth">Date of Birth</label>
+                <label htmlFor="meetingDate">Meeting Date</label>
                 <input
                   type="date"
-                  id="dateOfBirth"
-                  name="dateOfBirth"
-                  value={donationForm.dateOfBirth}
-                  onChange={handleFormChange}
+                  id="meetingDate"
+                  name="meetingDate"
+                  value={meetingDate}
+                  onChange={(e) => setMeetingDate(e.target.value)}
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="amount">Amount of {selectedItem.name} (in pounds)</label>
+                <label htmlFor="meetingTime">Meeting Time</label>
                 <input
-                  type="number"
-                  id="amount"
-                  name="amount"
-                  value={donationForm.amount}
-                  onChange={handleFormChange}
-                  min="0"
-                  step="0.1"
+                  type="time"
+                  id="meetingTime"
+                  name="meetingTime"
+                  value={meetingTime}
+                  onChange={(e) => setMeetingTime(e.target.value)}
                   required
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="donationTime">Preferred Drop-off Date & Time</label>
-                <input
-                  type="datetime-local"
-                  id="donationTime"
-                  name="donationTime"
-                  value={donationForm.donationTime}
-                  onChange={handleFormChange}
-                  required
-                />
-              </div>
-
-              <button type="submit" className="submit-btn">Submit Donation</button>
+              <button type="submit" className="submit-btn">Confirm</button>
             </form>
           </div>
         </div>
