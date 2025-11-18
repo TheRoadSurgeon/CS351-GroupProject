@@ -45,10 +45,8 @@ def _index_posting_in_trie(posting):
         return
 
     words = combined.split()
-
-    with trie_lock:
-        for w in words:
-            search_trie.insert(w, item_id=str(posting.id))
+    for w in words:
+        search_trie.insert(w, item_id=str(posting.id))
 
 
 def _build_trie_from_db():
@@ -57,10 +55,16 @@ def _build_trie_from_db():
     This will be called once at startup (in __main__).
     """
     postings = DonationPosting.query.all()
-    with trie_lock:
-        search_trie.clear()
-        for posting in postings:
-            _index_posting_in_trie(posting)
+    search_trie.clear()
+    
+    for posting in postings:
+        _index_posting_in_trie(posting)
+    
+    indexed_words = search_trie.words()
+    print(f"Trie Index Built Successfully")
+    print(f"Total postings indexed: {len(postings)}")
+    print(f"Total unique words indexed: {len(indexed_words)}")
+    print(f"\nIndexed words: {sorted(indexed_words)}")
 
 
 # --- Food banks API ---
@@ -332,35 +336,13 @@ def leaderboard():
     return jsonify({"leaderboard": out})
 
 
-# --- Debug ---
-
-@app.get("/api/db-test")
-def db_test():
-    try:
-        db.session.execute(text("SELECT 1"))
-        return jsonify({"db_ok": True})
-    except Exception as e:
-        print("DB TEST ERROR:", repr(e))
-        return jsonify({"db_ok": False, "error": str(e)}), 500
-
-
-@app.get("/api/db-info")
-def db_info():
-    url = str(db.engine.url)
-    if "@" in url and "://" in url:
-        head, tail = url.split("://", 1)
-        creds, host = tail.split("@", 1)
-        if ":" in creds:
-            user, _ = creds.split(":", 1)
-            url = f"{head}://{user}:***@{host}"
-    return {"dialect": db.engine.dialect.name, "url": url}
-
-
 if __name__ == "__main__":
     with app.app_context():
         try:
             _build_trie_from_db()
         except Exception as e:
             print("WARNING: Could not build Trie from DB at startup:", repr(e))
+            import traceback
+            traceback.print_exc()
 
     app.run(debug=True, port=5000)
