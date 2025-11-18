@@ -7,17 +7,74 @@ function DashboardDonor() {
   const [foodItemsNeeded, setFoodItemsNeeded] = useState([]);
   const [showDonationModal, setShowDonationModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [donationForm, setDonationForm] = useState({
+    name: '',
+    dateOfBirth: '',
+    amount: '',
+    donationTime: ''
+  });
   const [meetingDate, setMeetingDate] = useState('');
   const [meetingTime, setMeetingTime] = useState('');
 
   useEffect(() => {
-    // Mock data: Nearby food banks
-    setNearbyFoodBanks([
-      { id: 1, name: 'Central Food Bank', distance: '1.2 miles', verified: true, itemCount: 4 },
-      { id: 2, name: 'Community Kitchen', distance: '2.1 miles', verified: true, itemCount: 3 },
-      { id: 3, name: 'Hope Center', distance: '3.5 miles', verified: false, itemCount: 5 }
-    ]);
+    const fetchFoodBanks = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch('http://127.0.0.1:5000/api/food_banks');
+        if (!response.ok) {
+          throw new Error('Failed to fetch food banks');
+        }
+        
+        const data = await response.json();
+
+        // Transform the data to match the expected format
+        const transformedData = data.food_banks.map(bank => ({
+          id: bank.id,
+          name: bank.name,
+          distance: 'N/A', // Need distance calculation
+          verified: true, // Need verification status
+          itemCount: 0 // Need to fetch actual item count
+        }));
+
+        setNearbyFoodBanks(transformedData);
+      } catch (error) {
+        console.error('Error fetching food banks:', error);
+        setError('Failed to load food banks. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFoodBanks();
   }, []);
+
+  useEffect(() => {
+    if (searchTerm.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const fetchSuggestions = async () => {
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/api/items/autocomplete?q=${encodeURIComponent(searchTerm)}`);
+        const data = await response.json();
+        setSuggestions(data.items || []);
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+        setSuggestions([]);
+      }
+    };
+
+    const timeoutId = setTimeout(fetchSuggestions, 300); // Debounce
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   const handleFoodBankClick = (foodBank) => {
     setSelectedFoodBank(foodBank);
@@ -67,8 +124,30 @@ function DashboardDonor() {
   const handleConfirm = (e) => {
     e.preventDefault();
     console.log('Meeting scheduled:', { item: selectedItem, meetingDate, meetingTime });
-    // Handle confirmation here
     handleCloseModal();
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setShowSuggestions(true);
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setSearchTerm(suggestion);
+    setShowSuggestions(false);
+    searchPostings(suggestion);
+  };
+
+  const searchPostings = async (query) => {
+    if (!query.trim()) return;
+    
+    try {
+      const response = await fetch(`http://127.0.0.1:5000/api/search/postings?q=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      console.log('Search results:', data.postings);
+    } catch (error) {
+      console.error('Error searching postings:', error);
+    }
   };
 
   return (
@@ -114,32 +193,72 @@ function DashboardDonor() {
                 <button className="back-btn" onClick={handleBackToFoodBanks}>
                   ← Back to Food Banks
                 </button>
-                <h2>Items Needed by {selectedFoodBank.name}</h2>
+              </div>
+              <h2 className="items-header">Items Needed by {selectedFoodBank.name}</h2>
+              <div className="search-container-centered">
+                <div className="search-autocomplete-container">
+                  <input
+                    type="text"
+                    className="search-input"
+                    placeholder="Search for food items (e.g., rice, canned goods...)"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  />
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className="suggestions-dropdown">
+                      {suggestions.map((suggestion, index) => (
+                        <div
+                          key={index}
+                          className="suggestion-item"
+                          onClick={() => handleSuggestionClick(suggestion)}
+                        >
+                          {suggestion}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="items-list">
                 {foodItemsNeeded.length > 0 ? (
-                  foodItemsNeeded.map(item => (
-                    <div key={item.id} className="item-card">
-                      <div className="item-info">
-                        <h3>
-                          {item.name}
-                          <span className={`urgency-badge ${item.urgency.toLowerCase()}`}>
-                            {item.urgency}
-                          </span>
-                        </h3>
-                        <p className="quantity">Need: {item.quantityNeeded}</p>
+                  foodItemsNeeded
+                    .filter(item => {
+                      if (!searchTerm.trim()) return true;
+                      const searchLower = searchTerm.toLowerCase();
+                      return item.name.toLowerCase().includes(searchLower);
+                    })
+                    .map(item => (
+                      <div key={item.id} className="item-card">
+                        <div className="item-info">
+                          <h3>
+                            {item.name}
+                            <span className={`urgency-badge ${item.urgency.toLowerCase()}`}>
+                              {item.urgency}
+                            </span>
+                          </h3>
+                          <p className="quantity">Need: {item.quantityNeeded}</p>
+                        </div>
+                        <button 
+                          className="donate-btn"
+                          onClick={() => handleDonateClick(item)}
+                        >
+                          Donate This Item
+                        </button>
                       </div>
-                      <button 
-                        className="donate-btn"
-                        onClick={() => handleDonateClick(item)}
-                      >
-                        Donate This Item
-                      </button>
-                    </div>
-                  ))
+                    ))
                 ) : (
                   <p className="no-items">No items needed at this time.</p>
+                )}
+                {foodItemsNeeded.length > 0 && 
+                 foodItemsNeeded.filter(item => {
+                   if (!searchTerm.trim()) return true;
+                   const searchLower = searchTerm.toLowerCase();
+                   return item.name.toLowerCase().includes(searchLower);
+                 }).length === 0 && (
+                  <p className="no-items">No items match your search.</p>
                 )}
               </div>
             </>

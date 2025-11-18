@@ -12,7 +12,7 @@ import DonationForm from "./pages/DonationForm";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import './App.css';
@@ -41,14 +41,16 @@ export default function App()
 
 function MainApp()
 {
-  const [page, setPage] = useState("Dashboard"); //should be either donor or foodbank, need to change it 
+  const { getUserRole } = useAuth();
+  const userRole = getUserRole();
+  const [page, setPage] = useState("Dashboard");
 
   const switchPage = (pg) => {
     console.log("switchPage →", pg);
     switch(pg)
     {
       case "Dashboard":
-        return <DashboardFoodBank />
+        return userRole === "Food Bank" ? <DashboardFoodBank /> : <DashboardDonor />
           
       case "Food Banks":
         return <FoodBanks />
@@ -60,7 +62,8 @@ function MainApp()
         return <DonationForm />
 
       default:
-        return <DashboardDonor />
+        // Default also respects user role
+        return userRole === "Food Bank" ? <DashboardFoodBank /> : <DashboardDonor />
     }
 }
 

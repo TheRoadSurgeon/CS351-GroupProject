@@ -1,0 +1,39 @@
+CS351 Users File for seeding
+
+donor 1:
+UID: 94cf19c9-2db1-4e8c-a750-8c8e6e72007e
+email: donor1@example.com
+
+donor 2:
+UID: 5ab038a9-e9f4-4f73-9517-3ca513ff2b2c
+email: donor2@example.com
+
+donor 3:
+UID: 7b734092-62d5-476c-b6a3-1145a3edee76
+email: donor3@example.com
+
+REAL FOOD BANKS
+food bank 1 (pacific_garden_mission):
+UID: caa70ebf-bde4-4ebd-8318-b653babff2a2
+email: pacific_garden_mission@example.com
+
+food bank 2 (pilsen_food_pantry):
+UID: 0aeed71f-27c4-4dd1-a4d7-0071f4a87393
+email: pilsen_food_pantry@example.com
+
+food bank 3 (safer_foundation):
+UID: e08da5fe-6761-4c9f-a394-262bf7fdc00f
+email: safer_foundation@example.com
+
+DUMMY FOOD BANKS
+food bank 1:
+UID: 4b4286dc-f3f1-4d4a-b0a4-49da2b855376
+email: food_bank_1@example.com
+
+food bank 2:
+UID: 4cfa789c-dabd-4599-871f-4eebb29b88f2
+email: food_bank_2@example.com
+
+food bank 1:
+UID: 17e0462f-ca15-47c5-82dd-baa8dde243aa
+email: food_bank_3@example.com
