@@ -5,6 +5,16 @@ function DashboardFoodBank() {
   const [foodItems, setFoodItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [donorsForItem, setDonorsForItem] = useState([]);
+  const [showPostModal, setShowPostModal] = useState(false);
+  const [postForm, setPostForm] = useState({
+    foodName: '',
+    urgency: 'Medium',
+    quantityNeeded: '',
+    fromDate: '',
+    toDate: '',
+    fromTime: '',
+    toTime: ''
+  });
 
   useEffect(() => {
     // Mock data: Food items the food bank needs
@@ -56,6 +66,39 @@ function DashboardFoodBank() {
     setDonorsForItem([]);
   };
 
+  const handleOpenPostModal = () => {
+    setShowPostModal(true);
+  };
+
+  const handleClosePostModal = () => {
+    setShowPostModal(false);
+    setPostForm({
+      foodName: '',
+      urgency: 'Medium',
+      quantityNeeded: '',
+      fromDate: '',
+      toDate: '',
+      fromTime: '',
+      toTime: ''
+    });
+  };
+
+  const handleFormChange = (e) => {
+    setPostForm({
+      ...postForm,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmitPost = (e) => {
+    e.preventDefault();
+    console.log('Donation post submitted:', postForm);
+    // Handle form submission here
+    handleClosePostModal();
+  };
+
+
+
   return (
     <div id="dashboard">
       <div className="dashboard-grid">
@@ -64,14 +107,19 @@ function DashboardFoodBank() {
             <>
               <div className="content-header">
                 <h2>Food Items We Need</h2>
-                <div className="filters">
-                  <select>
-                    <option>All Urgency Levels</option>
-                    <option>High</option>
-                    <option>Medium</option>
-                    <option>Low</option>
-                  </select>
-                </div>
+                  <div className="header-actions">
+                    <button className="post-btn" onClick={handleOpenPostModal}>
+                      + Make Donation Post
+                    </button>
+                    <div className="filters">
+                      <select>
+                        <option>All Urgency Levels</option>
+                        <option>High</option>
+                        <option>Medium</option>
+                        <option>Low</option>
+                      </select>
+                    </div>
+                  </div>
               </div>
 
               <div className="items-list">
@@ -128,6 +176,109 @@ function DashboardFoodBank() {
           )}
         </div>
       </div>
+
+      {showPostModal && (
+        <div className="modal-overlay" onClick={handleClosePostModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Make Donation Post</h2>
+              <button className="close-btn" onClick={handleClosePostModal}>×</button>
+            </div>
+            
+            <form onSubmit={handleSubmitPost}>
+              <div className="form-group">
+                <label htmlFor="foodName">Food Name</label>
+                <input
+                  type="text"
+                  id="foodName"
+                  name="foodName"
+                  value={postForm.foodName}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="urgency">Urgency</label>
+                <select
+                  id="urgency"
+                  name="urgency"
+                  value={postForm.urgency}
+                  onChange={handleFormChange}
+                  required
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="quantityNeeded">Quantity Needed (in pounds)</label>
+                <input
+                  type="number"
+                  id="quantityNeeded"
+                  name="quantityNeeded"
+                  value={postForm.quantityNeeded}
+                  onChange={handleFormChange}
+                  min="0"
+                  step="0.1"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="fromDate">From Date</label>
+                <input
+                  type="date"
+                  id="fromDate"
+                  name="fromDate"
+                  value={postForm.fromDate}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="toDate">To Date</label>
+                <input
+                  type="date"
+                  id="toDate"
+                  name="toDate"
+                  value={postForm.toDate}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="fromTime">From Time</label>
+                <input
+                  type="time"
+                  id="fromTime"
+                  name="fromTime"
+                  value={postForm.fromTime}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="toTime">To Time</label>
+                <input
+                  type="time"
+                  id="toTime"
+                  name="toTime"
+                  value={postForm.toTime}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+              <button type="submit" className="submit-btn">Submit</button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
