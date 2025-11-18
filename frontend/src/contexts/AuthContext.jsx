@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   // Sign up with email and password
-  const signUp = async (email, password, role) => {
+  const signUp = async (email, password, role, additionalData = {}) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }) => {
         options: {
           data: {
             role: role, // Store role in user metadata
+            ...additionalData, // Store additional data (firstName, lastName, foodBankName, phone, address)
           }
         }
       })

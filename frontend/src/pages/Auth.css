@@ -8,12 +8,12 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   background: #1E3E62;
   padding: 20px;
   margin: 0;
-  overflow: auto;
+  overflow-y: auto;
   gap: 30px;
 }
 
@@ -46,11 +46,35 @@
   margin-bottom: 20px;
 }
 
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.form-row .form-group-flex-2 {
+  flex: 2;
+}
+
+.form-row .form-group-flex-1 {
+  flex: 1;
+}
+
 .form-group label {
   display: block;
   margin-bottom: 8px;
   color: black;
   font-weight: 500;
+}
+
+.form-group label .required {
+  color: red;
+  margin-left: 2px;
 }
 
 .form-group input,
@@ -68,6 +92,11 @@
 .form-group select:focus {
   outline: none;
   border-color: #667eea;
+}
+
+.form-group input::placeholder {
+  color: #999;
+  opacity: 1;
 }
 
 .auth-button {

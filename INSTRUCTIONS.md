@@ -14,6 +14,7 @@ The following instructions are crucial as they are needed to connect to Supabase
    ```env
    VITE_SUPABASE_URL=https://your-project-id.supabase.co
    VITE_SUPABASE_ANON_KEY=your-anon-key-here
+   VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
    ```
 
 ## Backend
