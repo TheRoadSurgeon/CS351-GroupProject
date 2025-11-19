@@ -1,5 +1,7 @@
 CS351 Users File for seeding
 
+NORMAL USERS
+
 donor 1:
 UID: 94cf19c9-2db1-4e8c-a750-8c8e6e72007e
 email: donor1@example.com
@@ -13,6 +15,7 @@ UID: 7b734092-62d5-476c-b6a3-1145a3edee76
 email: donor3@example.com
 
 REAL FOOD BANKS
+
 food bank 1 (pacific_garden_mission):
 UID: caa70ebf-bde4-4ebd-8318-b653babff2a2
 email: pacific_garden_mission@example.com
@@ -26,6 +29,7 @@ UID: e08da5fe-6761-4c9f-a394-262bf7fdc00f
 email: safer_foundation@example.com
 
 DUMMY FOOD BANKS
+
 food bank 1:
 UID: 4b4286dc-f3f1-4d4a-b0a4-49da2b855376
 email: food_bank_1@example.com
