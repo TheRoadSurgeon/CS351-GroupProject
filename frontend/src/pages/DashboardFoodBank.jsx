@@ -22,6 +22,15 @@ function DashboardFoodBank() {
 
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [showTimeChangeModal, setShowTimeChangeModal] = useState(false);
+  const [selectedMeetup, setSelectedMeetup] = useState(null);
+  const [timeChangeForm, setTimeChangeForm] = useState({
+    newDate: '',
+    newTime: '',
+    reason: ''
+  });
+  const [timeChangeLoading, setTimeChangeLoading] = useState(false);
+  const [timeChangeError, setTimeChangeError] = useState(null);
   const { user } = useAuth();
 
   const FOOD_BANK_ID = user?.id;
@@ -193,6 +202,94 @@ function DashboardFoodBank() {
     setSubmitError(null);
   };
 
+  const handleOpenTimeChangeModal = (meetup) => {
+    setSelectedMeetup(meetup);
+    setShowTimeChangeModal(true);
+    setTimeChangeForm({
+      newDate: meetup.scheduledDate,
+      newTime: meetup.scheduledTime,
+      reason: ''
+    });
+  };
+
+  const handleCloseTimeChangeModal = () => {
+    setShowTimeChangeModal(false);
+    setSelectedMeetup(null);
+    setTimeChangeForm({
+      newDate: '',
+      newTime: '',
+      reason: ''
+    });
+    setTimeChangeError(null);
+  };
+
+  const handleTimeChangeFormChange = (e) => {
+    setTimeChangeForm({
+      ...timeChangeForm,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmitTimeChange = async (e) => {
+    e.preventDefault();
+    setTimeChangeLoading(true);
+    setTimeChangeError(null);
+
+    const today = new Date().toISOString().split('T')[0];
+    const nowTime = new Date().toTimeString().slice(0,5);
+
+    // Validate new date
+    if (timeChangeForm.newDate < today) {
+      setTimeChangeError('New date cannot be in the past');
+      setTimeChangeLoading(false);
+      return;
+    }
+
+    // Validate new time
+    if (timeChangeForm.newDate === today && timeChangeForm.newTime < nowTime) {
+      setTimeChangeError('New time cannot be earlier than the current time');
+      setTimeChangeLoading(false);
+      return;
+    }
+
+    try {
+      // const response = await fetch(`http://127.0.0.1:5000/api/meetups/${selectedMeetup.id}`, {
+      //   method: 'PUT',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     scheduled_date: timeChangeForm.newDate,
+      //     scheduled_time: timeChangeForm.newTime,
+      //     // You can add a field to track the reason for the change if needed
+      //   }),
+      // });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update meetup time');
+      }
+
+      const data = await response.json();
+      // console.log('Meetup time updated:', data);
+
+      // // Update the local state
+      // setDonorsForItem(donorsForItem.map(donor => 
+      //   donor.id === selectedMeetup.id 
+      //     ? { ...donor, scheduledDate: timeChangeForm.newDate, scheduledTime: timeChangeForm.newTime }
+      //     : donor
+      // ));
+
+      handleCloseTimeChangeModal();
+
+    } catch (error) {
+      console.error('Error updating meetup time:', error);
+      setTimeChangeError(error.message);
+    } finally {
+      setTimeChangeLoading(false);
+    }
+  };
+
   const handleFormChange = (e) => {
     setPostForm({
       ...postForm,
@@ -204,6 +301,40 @@ function DashboardFoodBank() {
     e.preventDefault();
     setSubmitLoading(true);
     setSubmitError(null);
+
+    const today = new Date().toISOString().split('T')[0];
+    const nowTime = new Date().toTimeString().slice(0,5); // 'HH:MM'
+
+    // Validate fromDate
+    if (postForm.fromDate < today) {
+      setSubmitError('From Date cannot be in the past');
+      setSubmitLoading(false);
+      return;
+    }
+
+
+    if (postForm.fromDate === today && postForm.fromTime < nowTime) {
+      setSubmitError('From Time cannot be earlier than the current time');
+      setSubmitLoading(false);
+      return;
+    }
+
+    if (postForm.toDate < today) {
+      setSubmitError('To Date cannot be in the past');
+      setSubmitLoading(false);
+      return;
+    }
+    
+    if (postForm.fromDate === postForm.toDate && postForm.toTime < postForm.fromTime) {
+      setSubmitError('To Time cannot be earlier than From Time on the same day');
+      setSubmitLoading(false);
+      return;
+    }
+    if (postForm.toDate === today && postForm.toTime < nowTime) {
+      setSubmitError('To Time cannot be earlier than the current time');
+      setSubmitLoading(false);
+      return;
+    }
     
     if (!user || !user.id) {
       setSubmitError('You must be logged in as a Food Bank to create a post');
@@ -259,6 +390,20 @@ function DashboardFoodBank() {
       setSubmitLoading(false);
     }
   };
+
+  // Set today's date as default for fromDate and current time as default for fromTime
+  useEffect(() => {
+    if (showPostModal) {
+      const today = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0,5); // 'HH:MM'
+      setPostForm(form => ({
+        ...form,
+        fromDate: today,
+        fromTime: currentTime
+      }));
+    }
+  }, [showPostModal]);
 
   if (loading) {
     return (
@@ -376,7 +521,7 @@ function DashboardFoodBank() {
                             </span>
                           )}
                         </div>
-                        <button className="contact-btn">Contact</button>
+                        <button className="contact-btn" onClick={() => handleOpenTimeChangeModal(donor)}>Request Time Change</button>
                       </div>
                     ))
                   ) : (
@@ -452,6 +597,7 @@ function DashboardFoodBank() {
                   id="fromDate"
                   name="fromDate"
                   value={postForm.fromDate}
+                  min={new Date().toISOString().split('T')[0]}
                   onChange={handleFormChange}
                   required
                 />
@@ -494,6 +640,80 @@ function DashboardFoodBank() {
               </div>
               <button type="submit" className="submit-btn" disabled={submitLoading}>
                 {submitLoading ? 'Submitting...' : 'Submit'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showTimeChangeModal && selectedMeetup && (
+        <div className="modal-overlay" onClick={handleCloseTimeChangeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Request Time Change</h2>
+              <button className="close-btn" onClick={handleCloseTimeChangeModal}>×</button>
+            </div>
+
+            {timeChangeError && (
+              <div className="error-message" style={{ color: 'red', padding: '10px', marginBottom: '10px' }}>
+                {timeChangeError}
+              </div>
+            )}
+
+            <div style={{ marginLeft: '30px', marginRight: '30px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '4px', color: '#333' }}>
+              <p><strong>Donor:</strong> {selectedMeetup.name}</p>
+              <p><strong>Current Schedule:</strong> {selectedMeetup.scheduledDate} at {selectedMeetup.scheduledTime}</p>
+              <p><strong>Quantity:</strong> {selectedMeetup.quantity}</p>
+            </div>
+            
+            <form onSubmit={handleSubmitTimeChange}>
+              <div className="form-group">
+                <label htmlFor="newDate">New Date</label>
+                <input
+                  type="date"
+                  id="newDate"
+                  name="newDate"
+                  value={timeChangeForm.newDate}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={handleTimeChangeFormChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="newTime">New Time</label>
+                <input
+                  type="time"
+                  id="newTime"
+                  name="newTime"
+                  value={timeChangeForm.newTime}
+                  onChange={handleTimeChangeFormChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="reason">Reason for Change (Optional)</label>
+                <textarea
+                  id="reason"
+                  name="reason"
+                  value={timeChangeForm.reason}
+                  onChange={handleTimeChangeFormChange}
+                  rows="3"
+                  placeholder="Provide a reason for the time change request..."
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    border: '1px solid #ddd',
+                    fontFamily: 'inherit',
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
+
+              <button type="submit" className="submit-btn" disabled={timeChangeLoading}>
+                {timeChangeLoading ? 'Submitting...' : 'Request Time Change'}
               </button>
             </form>
           </div>
