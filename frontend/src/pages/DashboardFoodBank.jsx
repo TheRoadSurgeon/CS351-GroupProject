@@ -253,37 +253,36 @@ function DashboardFoodBank() {
     }
 
     try {
-      // const response = await fetch(`http://127.0.0.1:5000/api/meetups/${selectedMeetup.id}`, {
-      //   method: 'PUT',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     scheduled_date: timeChangeForm.newDate,
-      //     scheduled_time: timeChangeForm.newTime,
-      //     // You can add a field to track the reason for the change if needed
-      //   }),
-      // });
+      // Create a time change request instead of directly updating the meetup
+      const response = await fetch('http://127.0.0.1:5000/api/meetup_time_change_requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          meetup_id: selectedMeetup.id,
+          food_bank_id: user.id,
+          new_date: timeChangeForm.newDate,
+          new_time: timeChangeForm.newTime,
+          reason: timeChangeForm.reason,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update meetup time');
+        throw new Error(errorData.error || 'Failed to create time change request');
       }
 
       const data = await response.json();
-      // console.log('Meetup time updated:', data);
+      console.log('Time change request created:', data);
 
-      // // Update the local state
-      // setDonorsForItem(donorsForItem.map(donor => 
-      //   donor.id === selectedMeetup.id 
-      //     ? { ...donor, scheduledDate: timeChangeForm.newDate, scheduledTime: timeChangeForm.newTime }
-      //     : donor
-      // ));
+      // Show success message
+      alert('Time change request sent to donor for approval!');
 
       handleCloseTimeChangeModal();
 
     } catch (error) {
-      console.error('Error updating meetup time:', error);
+      console.error('Error creating time change request:', error);
       setTimeChangeError(error.message);
     } finally {
       setTimeChangeLoading(false);

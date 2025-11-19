@@ -10,6 +10,7 @@ from models import (
     FoodBank,
     DonationPosting,
     Meetup,
+    MeetupTimeChangeRequest,
     Leaderboard,
     Profile,
     Donor,
@@ -488,6 +489,176 @@ def create_meetup():
     db.session.commit()
     
     return jsonify(meetup.to_json()), 201
+
+
+# --- Meetup Time Change Requests API ---
+
+@app.post("/api/meetup_time_change_requests")
+def create_time_change_request():
+    """
+    Create a new meetup time change request.
+    Required fields: meetup_id, food_bank_id, new_date, new_time
+    Optional: reason
+    """
+    data = request.get_json(silent=True) or {}
+
+    meetup_id = data.get("meetup_id")
+    food_bank_id = data.get("food_bank_id")
+    new_date_str = data.get("new_date")
+    new_time_str = data.get("new_time")
+
+    if not all([meetup_id, food_bank_id, new_date_str, new_time_str]):
+        return jsonify(
+            {"error": "meetup_id, food_bank_id, new_date, and new_time are required"}
+        ), 400
+
+    # Validate UUID
+    try:
+        meetup_uuid = UUID(meetup_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid meetup_id format"}), 400
+
+    # Validate date and time
+    try:
+        from datetime import date, time
+        new_date = date.fromisoformat(new_date_str)
+        time_parts = new_time_str.split(':')
+        if len(time_parts) == 2:
+            new_time = time(int(time_parts[0]), int(time_parts[1]))
+        elif len(time_parts) == 3:
+            new_time = time(int(time_parts[0]), int(time_parts[1]), int(time_parts[2]))
+        else:
+            raise ValueError("Invalid time format")
+    except (ValueError, TypeError) as e:
+        return jsonify(
+            {"error": f"Invalid date/time format. Use YYYY-MM-DD for date and HH:MM for time. Error: {str(e)}"}
+        ), 400
+
+    # Check if meetup exists
+    meetup = Meetup.query.filter_by(id=meetup_uuid).first()
+    if not meetup:
+        return jsonify({"error": "Meetup not found"}), 404
+
+    # Validate food_bank_id
+    try:
+        fb_uuid = UUID(food_bank_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid food_bank_id format"}), 400
+
+    # Get the food bank name
+    food_bank = FoodBank.query.filter_by(id=fb_uuid).first()
+    if not food_bank:
+        return jsonify({"error": "Food bank not found"}), 404
+
+    # Get the donor name from the meetup
+    donor = Donor.query.filter_by(id=meetup.donor_id).first()
+    if not donor:
+        return jsonify({"error": "Donor not found"}), 404
+    
+    donor_name = f"{donor.first_name} {donor.last_name}".strip()
+
+    # Check if there's already a pending request for this meetup
+    existing_request = MeetupTimeChangeRequest.query.filter_by(
+        meetup_id=meetup_uuid,
+        status='pending'
+    ).first()
+    
+    if existing_request:
+        return jsonify({"error": "There is already a pending time change request for this meetup"}), 400
+
+    reason = data.get("reason", "")
+    now = datetime.utcnow()
+
+    time_change_request = MeetupTimeChangeRequest(
+        id=uuid4(),
+        meetup_id=meetup_uuid,
+        requested_by=food_bank.name,
+        requested_to=donor_name,
+        new_date=new_date,
+        new_time=new_time,
+        reason=reason,
+        status='pending',
+        created_at=now,
+        updated_at=now,
+    )
+
+    db.session.add(time_change_request)
+    db.session.commit()
+
+    return jsonify(time_change_request.to_json()), 201
+
+
+@app.get("/api/meetup_time_change_requests")
+def list_time_change_requests():
+    """
+    List meetup time change requests.
+    Optional filters: meetup_id, status ('pending', 'approved', 'rejected')
+    """
+    meetup_id = request.args.get("meetup_id")
+    status = request.args.get("status")
+
+    query = MeetupTimeChangeRequest.query
+
+    if meetup_id:
+        try:
+            meetup_uuid = UUID(meetup_id)
+            query = query.filter_by(meetup_id=meetup_uuid)
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid meetup_id format"}), 400
+
+    if status:
+        if status not in ['pending', 'approved', 'rejected']:
+            return jsonify({"error": "status must be 'pending', 'approved', or 'rejected'"}), 400
+        query = query.filter_by(status=status)
+
+    requests = query.order_by(MeetupTimeChangeRequest.created_at.desc()).all()
+    return jsonify({"requests": [r.to_json() for r in requests]})
+
+
+@app.put("/api/meetup_time_change_requests/<request_id>")
+def respond_to_time_change_request(request_id):
+    """
+    Respond to a time change request (approve or reject).
+    Required field: action ('approve' or 'reject')
+    """
+    data = request.get_json(silent=True) or {}
+    action = data.get("action")
+
+    if not action or action not in ['approve', 'reject']:
+        return jsonify({"error": "action must be 'approve' or 'reject'"}), 400
+
+    try:
+        request_uuid = UUID(request_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid request_id format"}), 400
+
+    time_change_request = MeetupTimeChangeRequest.query.filter_by(id=request_uuid).first()
+    if not time_change_request:
+        return jsonify({"error": "Time change request not found"}), 404
+
+    if time_change_request.status != 'pending':
+        return jsonify({"error": "This request has already been responded to"}), 400
+
+    now = datetime.utcnow()
+
+    if action == 'approve':
+        # Update the meetup with the new time
+        meetup = Meetup.query.filter_by(id=time_change_request.meetup_id).first()
+        if meetup:
+            meetup.scheduled_date = time_change_request.new_date
+            meetup.scheduled_time = time_change_request.new_time
+            meetup.updated_at = now
+        
+        time_change_request.status = 'approved'
+    else:
+        time_change_request.status = 'rejected'
+
+    time_change_request.responded_at = now
+    time_change_request.updated_at = now
+
+    db.session.commit()
+
+    return jsonify(time_change_request.to_json())
 
 
 # --- Leaderboard (by total donated weight) ---

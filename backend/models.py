@@ -297,6 +297,44 @@ class Meetup(db.Model):
         }
 
 
+class MeetupTimeChangeRequest(db.Model):
+    __tablename__ = "meetup_time_change_requests"
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True)
+    meetup_id = db.Column(
+        UUID(as_uuid=True),
+        db.ForeignKey("meetups.id"),
+        nullable=False,
+    )
+    requested_by = db.Column(db.String, nullable=False)  # Name of the food bank
+    requested_to = db.Column(db.String, nullable=False)  # Name of the donor
+    new_date = db.Column(db.Date, nullable=False)
+    new_time = db.Column(db.Time, nullable=False)
+    reason = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String, nullable=False, default='pending')  # 'pending', 'approved', 'rejected'
+    
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), nullable=False)
+    responded_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+    meetup = db.relationship("Meetup", backref="time_change_requests")
+
+    def to_json(self):
+        return {
+            "id": str(self.id),
+            "meetup_id": str(self.meetup_id),
+            "requested_by": self.requested_by,
+            "requested_to": self.requested_to,
+            "new_date": self.new_date.isoformat() if self.new_date else None,
+            "new_time": self.new_time.isoformat() if self.new_time else None,
+            "reason": self.reason,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "responded_at": self.responded_at.isoformat() if self.responded_at else None,
+        }
+
+
 class Leaderboard(db.Model):
     __tablename__ = "leaderboard"
 
