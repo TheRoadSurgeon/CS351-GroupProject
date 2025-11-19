@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import "./DashboardDonor.css";
+import { useAuth } from '../contexts/AuthContext';
 
 function DashboardDonor() {
   const [nearbyFoodBanks, setNearbyFoodBanks] = useState([]);
@@ -12,15 +13,20 @@ function DashboardDonor() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [meetingDate, setMeetingDate] = useState('');
+  const [meetingTime, setMeetingTime] = useState('');
+  const [donationQuantity, setDonationQuantity] = useState('');
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
   const [donationForm, setDonationForm] = useState({
     name: '',
     dateOfBirth: '',
     amount: '',
     donationTime: ''
   });
-  const [meetingDate, setMeetingDate] = useState('');
-  const [meetingTime, setMeetingTime] = useState('');
-
+  const { user } = useAuth();
+ 
+  
   useEffect(() => {
     const fetchFoodBanks = async () => {
       try {
@@ -34,13 +40,12 @@ function DashboardDonor() {
         
         const data = await response.json();
 
-        // Transform the data to match the expected format
         const transformedData = data.food_banks.map(bank => ({
           id: bank.id,
           name: bank.name,
-          distance: 'N/A', // Need distance calculation
-          verified: true, // Need verification status
-          itemCount: 0 // Need to fetch actual item count
+          distance: 'N/A',
+          verified: true,
+          itemCount: 0
         }));
 
         setNearbyFoodBanks(transformedData);
@@ -72,36 +77,45 @@ function DashboardDonor() {
       }
     };
 
-    const timeoutId = setTimeout(fetchSuggestions, 300); // Debounce
+    const timeoutId = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
-  const handleFoodBankClick = (foodBank) => {
+  const handleFoodBankClick = async (foodBank) => {
     setSelectedFoodBank(foodBank);
+    setLoading(true);
+    setError(null);
     
-    // Mock data: Food items needed by each food bank
-    const mockFoodItems = {
-      1: [ // Central Food Bank
-        { id: 1, name: 'Canned Goods', urgency: 'High', quantityNeeded: '100 cans' },
-        { id: 2, name: 'Rice', urgency: 'High', quantityNeeded: '50 lbs' },
-        { id: 3, name: 'Pasta', urgency: 'Medium', quantityNeeded: '30 lbs' },
-        { id: 4, name: 'Cooking Oil', urgency: 'Low', quantityNeeded: '10 gallons' }
-      ],
-      2: [ // Community Kitchen
-        { id: 5, name: 'Fresh Produce', urgency: 'High', quantityNeeded: '40 lbs' },
-        { id: 6, name: 'Dairy', urgency: 'High', quantityNeeded: '20 gallons' },
-        { id: 7, name: 'Bread', urgency: 'Medium', quantityNeeded: '50 loaves' }
-      ],
-      3: [ // Hope Center
-        { id: 8, name: 'Canned Vegetables', urgency: 'High', quantityNeeded: '75 cans' },
-        { id: 9, name: 'Peanut Butter', urgency: 'Medium', quantityNeeded: '20 jars' },
-        { id: 10, name: 'Cereal', urgency: 'Medium', quantityNeeded: '30 boxes' },
-        { id: 11, name: 'Baby Food', urgency: 'High', quantityNeeded: '50 jars' },
-        { id: 12, name: 'Coffee', urgency: 'Low', quantityNeeded: '10 lbs' }
-      ]
-    };
-
-    setFoodItemsNeeded(mockFoodItems[foodBank.id] || []);
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:5000/api/donation_postings?food_bank_id=${foodBank.id}`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch donation postings for this food bank');
+      }
+      
+      const data = await response.json();
+      
+      const transformedItems = data.postings.map(posting => ({
+        id: posting.id,
+        name: posting.food_name,
+        urgency: posting.urgency,
+        quantityNeeded: `${posting.qty_needed} lbs`,
+        fromDate: posting.from_date,
+        toDate: posting.to_date,
+        fromTime: posting.from_time,
+        toTime: posting.to_time,
+      }));
+      
+      setFoodItemsNeeded(transformedItems);
+    } catch (err) {
+      console.error('Error fetching food items:', err);
+      setError('Failed to load food items for this food bank. Please try again.');
+      setFoodItemsNeeded([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBackToFoodBanks = () => {
@@ -119,12 +133,54 @@ function DashboardDonor() {
     setSelectedItem(null);
     setMeetingDate('');
     setMeetingTime('');
+    setDonationQuantity('');
+    setSubmitError(null);
   };
 
-  const handleConfirm = (e) => {
+  const handleConfirm = async (e) => {
     e.preventDefault();
-    console.log('Meeting scheduled:', { item: selectedItem, meetingDate, meetingTime });
-    handleCloseModal();
+    setSubmitLoading(true);
+    setSubmitError(null);
+
+    if (!user || !user.id) {
+      setSubmitError('You must be logged in as a Donor to schedule a donation');
+      setSubmitLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://127.0.0.1:5000/api/meetups', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          posting_id: selectedItem.id,
+          donor_id: user.id,
+          food_bank_id: selectedFoodBank.id,
+          scheduled_date: meetingDate,
+          scheduled_time: meetingTime,
+          donation_item: selectedItem.name,
+          quantity: parseFloat(donationQuantity),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to schedule donation');
+      }
+
+      const data = await response.json();
+      console.log('Donation scheduled successfully:', data);
+
+      alert('Donation scheduled successfully! The food bank will be notified.');
+      handleCloseModal();
+    } catch (error) {
+      console.error('Error scheduling donation:', error);
+      setSubmitError(error.message);
+    } finally {
+      setSubmitLoading(false);
+    }
   };
 
   const handleSearchChange = (e) => {
@@ -266,7 +322,6 @@ function DashboardDonor() {
         </div>
       </div>
 
-      {/* Meeting Time Modal */}
       {showDonationModal && selectedItem && (
         <div className="modal-overlay" onClick={handleCloseModal}>
           <div className="modal-content small-modal" onClick={(e) => e.stopPropagation()}>
@@ -274,8 +329,28 @@ function DashboardDonor() {
               <h2>Schedule Donation</h2>
               <button className="close-btn" onClick={handleCloseModal}>×</button>
             </div>
+
+            {submitError && (
+              <div className="error-message" style={{ color: 'red', padding: '10px', marginBottom: '10px' }}>
+                {submitError}
+              </div>
+            )}
             
             <form onSubmit={handleConfirm}>
+              <div className="form-group">
+                <label htmlFor="donationQuantity">Quantity You're Donating (lbs)</label>
+                <input
+                  type="number"
+                  id="donationQuantity"
+                  name="donationQuantity"
+                  value={donationQuantity}
+                  onChange={(e) => setDonationQuantity(e.target.value)}
+                  min="0.1"
+                  step="0.1"
+                  required
+                />
+              </div>
+
               <div className="form-group">
                 <label htmlFor="meetingDate">Meeting Date</label>
                 <input
@@ -284,6 +359,8 @@ function DashboardDonor() {
                   name="meetingDate"
                   value={meetingDate}
                   onChange={(e) => setMeetingDate(e.target.value)}
+                  min={selectedItem?.fromDate}
+                  max={selectedItem?.toDate}
                   required
                 />
               </div>
@@ -298,9 +375,14 @@ function DashboardDonor() {
                   onChange={(e) => setMeetingTime(e.target.value)}
                   required
                 />
+                <small style={{ color: '#666', fontSize: '0.85em' }}>
+                  Available: {selectedItem?.fromTime} - {selectedItem?.toTime}
+                </small>
               </div>
 
-              <button type="submit" className="submit-btn">Confirm</button>
+              <button type="submit" className="submit-btn" disabled={submitLoading}>
+                {submitLoading ? 'Scheduling...' : 'Confirm Donation'}
+              </button>
             </form>
           </div>
         </div>

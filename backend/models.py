@@ -183,6 +183,64 @@ class DonationPosting(db.Model):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
+# class Meetup(db.Model):
+#     __tablename__ = "meetups"
+
+#     id = db.Column(UUID(as_uuid=True), primary_key=True)
+
+#     posting_id = db.Column(
+#         UUID(as_uuid=True),
+#         db.ForeignKey("donation_postings.id"),
+#         nullable=False,
+#     )
+#     donor_id = db.Column(
+#         UUID(as_uuid=True),
+#         db.ForeignKey("donors.id"),
+#         nullable=False,
+#     )
+#     food_bank_id = db.Column(
+#         UUID(as_uuid=True),
+#         db.ForeignKey("food_banks.id"),
+#         nullable=False,
+#     )
+
+#     status = db.Column(db.String, nullable=False)
+#     scheduled_time = db.Column(db.DateTime(timezone=True), nullable=False)
+
+#     donation_items = db.Column(db.Text, nullable=False)
+#     quantity = db.Column(db.Numeric, nullable=True)
+
+#     notes = db.Column(db.Text, nullable=True)
+#     completion_notes = db.Column(db.Text, nullable=True)
+
+#     completed_at = db.Column(db.DateTime(timezone=True), nullable=True)
+#     created_at = db.Column(db.DateTime(timezone=True), nullable=False)
+#     updated_at = db.Column(db.DateTime(timezone=True), nullable=False)
+
+#     posting = db.relationship("DonationPosting", backref="meetups")
+#     donor = db.relationship("Donor", backref="meetups")
+#     food_bank = db.relationship("FoodBank", backref="meetups")
+
+#     def to_json(self):
+#         return {
+#             "id": str(self.id),
+#             "posting_id": str(self.posting_id),
+#             "donor_id": str(self.donor_id),
+#             "food_bank_id": str(self.food_bank_id),
+#             "status": self.status,
+#             "scheduled_time": self.scheduled_time.isoformat()
+#             if self.scheduled_time else None,
+#             "donation_items": self.donation_items,
+#             "quantity": float(self.quantity) if self.quantity is not None else None,
+#             "notes": self.notes,
+#             "completion_notes": self.completion_notes,
+#             "completed_at": self.completed_at.isoformat()
+#             if self.completed_at else None,
+#             "created_at": self.created_at.isoformat() if self.created_at else None,
+#             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+#         }
+
+
 class Meetup(db.Model):
     __tablename__ = "meetups"
 
@@ -204,16 +262,14 @@ class Meetup(db.Model):
         nullable=False,
     )
 
-    status = db.Column(db.String, nullable=False)
-    scheduled_time = db.Column(db.DateTime(timezone=True), nullable=False)
-
-    donation_items = db.Column(db.Text, nullable=False)
-    quantity = db.Column(db.Numeric, nullable=True)
-
-    notes = db.Column(db.Text, nullable=True)
-    completion_notes = db.Column(db.Text, nullable=True)
-
+    donation_item = db.Column(db.String, nullable=False)
+    quantity = db.Column(db.Numeric, nullable=False)
+    scheduled_date = db.Column(db.Date, nullable=False)
+    scheduled_time = db.Column(db.Time, nullable=False)
+    
+    completed = db.Column(db.Boolean, nullable=False, default=False)
     completed_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    
     created_at = db.Column(db.DateTime(timezone=True), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), nullable=False)
 
@@ -227,13 +283,13 @@ class Meetup(db.Model):
             "posting_id": str(self.posting_id),
             "donor_id": str(self.donor_id),
             "food_bank_id": str(self.food_bank_id),
-            "status": self.status,
+            "donation_item": self.donation_item,
+            "quantity": float(self.quantity) if self.quantity is not None else None,
+            "scheduled_date": self.scheduled_date.isoformat()
+            if self.scheduled_date else None,
             "scheduled_time": self.scheduled_time.isoformat()
             if self.scheduled_time else None,
-            "donation_items": self.donation_items,
-            "quantity": float(self.quantity) if self.quantity is not None else None,
-            "notes": self.notes,
-            "completion_notes": self.completion_notes,
+            "completed": self.completed,
             "completed_at": self.completed_at.isoformat()
             if self.completed_at else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
