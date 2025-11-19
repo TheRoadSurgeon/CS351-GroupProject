@@ -1,52 +1,67 @@
 import { useState, useEffect } from 'react';
-import "./Leaderboard.css";
+import './Leaderboard.css';
+
+const API_BASE_URL = 'http://localhost:5000';
 
 function Leaderboard() {
   const [timeFrame, setTimeFrame] = useState('week');
   const [leaderboardData, setLeaderboardData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const mockData = {
-      week: [
-        { id: 1, name: "Sarah Johnson", totalValue: 450, topItem: "Canned Goods", totalWeight: "120 lbs", image: "" },
-        { id: 2, name: "Michael Chen", totalValue: 380, topItem: "Fresh Produce", totalWeight: "95 lbs", image: "" },
-        { id: 3, name: "Emma Williams", totalValue: 320, topItem: "Rice & Pasta", totalWeight: "80 lbs", image: "" }
-      ],
-      month: [
-        { id: 1, name: "Robert Davis", totalValue: 1850, topItem: "Canned Goods", totalWeight: "450 lbs", image: "" },
-        { id: 2, name: "Lisa Anderson", totalValue: 1620, topItem: "Fresh Produce", totalWeight: "380 lbs", image: "" },
-        { id: 3, name: "David Martinez", totalValue: 1450, topItem: "Dairy Products", totalWeight: "320 lbs", image: "" }
-      ],
-      alltime: [
-        { id: 1, name: "Jennifer Lopez", totalValue: 8500, topItem: "Mixed Items", totalWeight: "2100 lbs", image: "" },
-        { id: 2, name: "William Brown", totalValue: 7800, topItem: "Canned Goods", totalWeight: "1850 lbs", image: "" },
-        { id: 3, name: "Patricia Garcia", totalValue: 7200, topItem: "Fresh Produce", totalWeight: "1650 lbs", image: "" }
-      ]
+    const fetchLeaderboard = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/leaderboard?timeframe=${timeFrame}`
+        );
+
+        if (!res.ok) {
+          throw new Error(`Request failed with status ${res.status}`);
+        }
+
+        const json = await res.json();
+        const list = Array.isArray(json.leaderboard) ? json.leaderboard : [];
+        setLeaderboardData(list);
+      } catch (err) {
+        setError(err.message || 'Failed to load leaderboard');
+        setLeaderboardData([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setLeaderboardData(mockData[timeFrame]);
-    setLoading(false);
+    fetchLeaderboard();
   }, [timeFrame]);
+
+  const handleTimeFrameChange = (value) => {
+    if (value !== timeFrame) {
+      setTimeFrame(value);
+    }
+  };
 
   return (
     <div id="leaderboard">
+      {/* Time frame buttons */}
       <div className="time-filter">
-        <button 
+        <button
           className={timeFrame === 'week' ? 'active' : ''}
-          onClick={() => setTimeFrame('week')}
+          onClick={() => handleTimeFrameChange('week')}
         >
           This Week
         </button>
-        <button 
+        <button
           className={timeFrame === 'month' ? 'active' : ''}
-          onClick={() => setTimeFrame('month')}
+          onClick={() => handleTimeFrameChange('month')}
         >
           This Month
         </button>
-        <button 
+        <button
           className={timeFrame === 'alltime' ? 'active' : ''}
-          onClick={() => setTimeFrame('alltime')}
+          onClick={() => handleTimeFrameChange('alltime')}
         >
           All Time
         </button>
@@ -54,51 +69,87 @@ function Leaderboard() {
 
       <div className="leaderboard-content">
         <div className="leaderboard-header">
-          <h2>User Information</h2>
+          <h2>Top Donors</h2>
         </div>
 
         {loading ? (
           <div className="loading-message">Loading leaderboard...</div>
+        ) : error ? (
+          <div className="error-message">{error}</div>
+        ) : leaderboardData.length === 0 ? (
+          <div className="empty-message">
+            No donations found for this timeframe yet.
+          </div>
         ) : (
           <div className="leaderboard-list">
-            {leaderboardData.map((user, index) => (
-              <div key={user.id} className="leaderboard-card">
-                <div className="rank-badge">
-                  {index === 0 && <span className="trophy">🏆</span>}
-                  {index === 1 && <span className="medal">🥈</span>}
-                  {index === 2 && <span className="medal">🥉</span>}
-                  <span className="rank-number">#{index + 1}</span>
-                </div>
+            {/* Column labels */}
+            <div className="leaderboard-header-row">
+              <div className="col-place">Place</div>
+              <div className="col-player">Player</div>
+              <div className="col-meetups">Meetups completed</div>
+              <div className="col-weight">Total donated</div>
+            </div>
 
-                <div className="user-image">
-                  {user.image ? (
-                    <img src={user.image} alt={user.name} />
-                  ) : (
-                    <div className="image-placeholder">(Image)</div>
-                  )}
-                </div>
+            {/* Data rows */}
+            {leaderboardData.map((entry, index) => {
+              const rank = index + 1;
+              const isTopThree = rank <= 3;
 
-                <div className="user-info">
-                  <div className="info-column left">
-                    <div className="info-item">
-                      <strong>Name: </strong>{user.name}
-                    </div>
-                    <div className="info-item">
-                      <strong>Top donate item: </strong>{user.topItem}
+              let placeContent;
+              if (rank === 1) {
+                placeContent = <span className="medal-emoji">🥇</span>;
+              } else if (rank === 2) {
+                placeContent = <span className="medal-emoji">🥈</span>;
+              } else if (rank === 3) {
+                placeContent = <span className="medal-emoji">🥉</span>;
+              } else {
+                placeContent = <span className="rank-number">#{rank}</span>;
+              }
+
+              const firstName = entry.first_name || '';
+              const lastName = entry.last_name || '';
+              const fullName = (firstName + ' ' + lastName).trim() || 'Unknown donor';
+
+              const initials =
+                (firstName[0] || '').toUpperCase() +
+                (lastName[0] || '').toUpperCase();
+
+              const safeWeight =
+                typeof entry.total_weight === 'number'
+                  ? entry.total_weight
+                  : parseFloat(entry.total_weight || '0');
+
+              const totalMeetups =
+                typeof entry.total_meetups === 'number'
+                  ? entry.total_meetups
+                  : parseInt(entry.total_meetups || '0', 10);
+
+              return (
+                <div
+                  key={entry.donor_id || index}
+                  className={`leaderboard-row ${isTopThree ? 'top-three' : ''}`}
+                >
+                  <div className="col-place">{placeContent}</div>
+
+                  <div className="col-player">
+                    <div className="player-info">
+                      <div className="avatar-circle">
+                        {initials || '??'}
+                      </div>
+                      <div className="player-name">{fullName}</div>
                     </div>
                   </div>
 
-                  <div className="info-column right">
-                    <div className="info-item">
-                      <strong>Total donation: </strong>${user.totalValue}
-                    </div>
-                    <div className="info-item">
-                      <strong>Total donation: </strong>{user.totalWeight}
-                    </div>
+                  <div className="col-meetups">
+                    {totalMeetups}
+                  </div>
+
+                  <div className="col-weight">
+                    {safeWeight.toFixed(1)} lbs
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
