@@ -130,6 +130,28 @@ function DashboardFoodBank() {
       const meetupsData = await meetupsResponse.json();
       const meetups = meetupsData.meetups || [];
 
+      // Fetch time change requests for these meetups
+      const timeChangeResponse = await fetch(
+        'http://127.0.0.1:5000/api/meetup_time_change_requests'
+      );
+
+      let timeChangeRequests = [];
+      if (timeChangeResponse.ok) {
+        const timeChangeData = await timeChangeResponse.json();
+        timeChangeRequests = timeChangeData.requests || [];
+        console.log('Fetched time change requests:', timeChangeRequests);
+      }
+
+      // Create a map of meetup_id -> time change request
+      const timeChangeByMeetupId = {};
+      timeChangeRequests.forEach(req => {
+        // Only store the most recent request for each meetup
+        if (!timeChangeByMeetupId[req.meetup_id] || 
+            new Date(req.created_at) > new Date(timeChangeByMeetupId[req.meetup_id].created_at)) {
+          timeChangeByMeetupId[req.meetup_id] = req;
+        }
+      });
+
       // Fetch donor details for each meetup
       const donorsWithDetails = await Promise.all(
         meetups.map(async (meetup) => {
@@ -145,6 +167,9 @@ function DashboardFoodBank() {
               donorName = `${donorData.first_name} ${donorData.last_name}`;
             }
 
+            // Check for time change request status
+            const timeChangeRequest = timeChangeByMeetupId[meetup.id];
+
             return {
               id: meetup.id,
               name: donorName,
@@ -152,7 +177,8 @@ function DashboardFoodBank() {
               scheduledDate: meetup.scheduled_date,
               scheduledTime: meetup.scheduled_time,
               completed: meetup.completed,
-              verified: true, // You can add verification logic later
+              verified: true,
+              timeChangeRequest: timeChangeRequest || null,
             };
           } catch (err) {
             console.error(`Error fetching donor ${meetup.donor_id}:`, err);
@@ -164,6 +190,7 @@ function DashboardFoodBank() {
               scheduledTime: meetup.scheduled_time,
               completed: meetup.completed,
               verified: false,
+              timeChangeRequest: null,
             };
           }
         })
@@ -275,6 +302,13 @@ function DashboardFoodBank() {
 
       const data = await response.json();
       console.log('Time change request created:', data);
+
+      // Update local state to show pending badge immediately
+      setDonorsForItem(donorsForItem.map(d =>
+        d.id === selectedMeetup.id
+          ? { ...d, timeChangeRequest: data }
+          : d
+      ));
 
       // Show success message
       alert('Time change request sent to donor for approval!');
@@ -502,7 +536,38 @@ function DashboardFoodBank() {
                         <div className="item-info">
                           <h3>
                             {donor.name} 
-                            {donor.verified && <span className="verified">✓</span>}
+                            {donor.verified && !donor.timeChangeRequest && <span className="verified">✓</span>}
+                            {donor.timeChangeRequest && donor.timeChangeRequest.status === 'approved' && (
+                              <span className="verified">✓</span>
+                            )}
+                            {donor.timeChangeRequest && donor.timeChangeRequest.status === 'rejected' && (
+                              <span style={{
+                                background: '#d32f2f',
+                                color: 'white',
+                                padding: '4px 12px',
+                                borderRadius: '12px',
+                                fontSize: '0.75em',
+                                fontWeight: '600',
+                                marginLeft: '12px',
+                                textTransform: 'uppercase'
+                              }}>
+                                ✗ REJECTED
+                              </span>
+                            )}
+                            {donor.timeChangeRequest && donor.timeChangeRequest.status === 'pending' && (
+                              <span style={{
+                                background: '#ff9800',
+                                color: 'white',
+                                padding: '4px 12px',
+                                borderRadius: '12px',
+                                fontSize: '0.75em',
+                                fontWeight: '600',
+                                marginLeft: '12px',
+                                textTransform: 'uppercase'
+                              }}>
+                                ⏱ PENDING
+                              </span>
+                            )}
                           </h3>
                           <p className="quantity">Donating: {donor.quantity}</p>
                           <p className="distance">
@@ -520,7 +585,17 @@ function DashboardFoodBank() {
                             </span>
                           )}
                         </div>
-                        <button className="contact-btn" onClick={() => handleOpenTimeChangeModal(donor)}>Request Time Change</button>
+                        <button 
+                          className="contact-btn" 
+                          onClick={() => handleOpenTimeChangeModal(donor)}
+                          disabled={donor.timeChangeRequest && donor.timeChangeRequest.status === 'pending'}
+                          style={{
+                            opacity: donor.timeChangeRequest && donor.timeChangeRequest.status === 'pending' ? 0.6 : 1,
+                            cursor: donor.timeChangeRequest && donor.timeChangeRequest.status === 'pending' ? 'not-allowed' : 'pointer'
+                          }}
+                        >
+                          Request Time Change
+                        </button>
                       </div>
                     ))
                   ) : (
@@ -706,7 +781,8 @@ function DashboardFoodBank() {
                     borderRadius: '4px',
                     border: '1px solid #ddd',
                     fontFamily: 'inherit',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    color: '#333'
                   }}
                 />
               </div>

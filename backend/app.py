@@ -214,6 +214,23 @@ def list_donation_postings():
     return jsonify({"postings": [p.to_json() for p in postings]})
 
 
+@app.get("/api/donation_postings/<posting_id>")
+def get_donation_posting(posting_id):
+    """
+    Get a specific donation posting's details.
+    """
+    try:
+        posting_uuid = UUID(posting_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid posting_id format"}), 400
+    
+    posting = DonationPosting.query.filter_by(id=posting_uuid).first()
+    if not posting:
+        return jsonify({"error": "Donation posting not found"}), 404
+    
+    return jsonify(posting.to_json())
+
+
 @app.post("/api/donation_postings")
 def create_donation_posting():
     """
