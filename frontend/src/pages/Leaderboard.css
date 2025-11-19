@@ -101,9 +101,9 @@
   background: #ffffff;
 }
 
-/* Highlight top 3 a bit */
+
 .leaderboard-row.top-three {
-  border: 2px solid rgba(251, 191, 36, 0.8); /* amber-400 */
+  border: 2px solid rgba(251, 191, 36, 0.8); 
 }
 
 /* Place column */
@@ -115,7 +115,6 @@
   justify-content: flex-start;
 }
 
-/* Nudge "Place" label a bit closer to left edge */
 .leaderboard-header-row .col-place {
   padding-left: 4px;
 }
@@ -136,7 +135,7 @@
 .col-player {
   display: flex;
   align-items: center;
-  padding-left: 8px; /* slight shift to the right like you asked */
+  padding-left: 8px; 
 }
 
 .player-info {
@@ -179,7 +178,6 @@
 }
 
 
-/* Loading / error / empty states */
 .loading-message,
 .error-message,
 .empty-message {
@@ -204,7 +202,6 @@
   background: #e5e7eb;
 }
 
-/* Basic responsiveness: let columns adapt as width shrinks */
 @media (max-width: 900px) {
   .leaderboard-header-row,
   .leaderboard-row {
@@ -218,7 +215,7 @@
     grid-template-columns: 70px 2fr 1fr;
   }
 
-  /* Hide total weight column on smaller screens to avoid squishing */
+ 
   .col-weight {
     display: none;
   }

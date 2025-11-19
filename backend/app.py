@@ -510,16 +510,13 @@ def leaderboard():
         cutoff = now - timedelta(days=7)
     elif timeframe == "month":
         cutoff = now - timedelta(days=30)
-    # else: alltime → cutoff remains None
-
-    # Base query: only completed meetups
+ 
     query = db.session.query(
         Meetup.donor_id,
         db.func.count(Meetup.id).label("total_meetups"),
         db.func.coalesce(db.func.sum(Meetup.quantity), 0).label("total_weight"),
     ).filter(Meetup.completed.is_(True))
 
-    # Apply timeframe filter if needed
     if cutoff is not None:
         query = query.filter(Meetup.completed_at >= cutoff)
 
