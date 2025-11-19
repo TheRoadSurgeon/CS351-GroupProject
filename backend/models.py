@@ -92,6 +92,58 @@ class FoodBank(db.Model):
         }
 
 
+# class DonationPosting(db.Model):
+#     __tablename__ = "donation_postings"
+
+#     id = db.Column(UUID(as_uuid=True), primary_key=True)
+#     food_bank_id = db.Column(
+#         UUID(as_uuid=True),
+#         db.ForeignKey("food_banks.id"),
+#         nullable=False,
+#     )
+
+#     title = db.Column(db.String, nullable=False)
+#     description = db.Column(db.Text, nullable=True)
+#     food_type = db.Column(db.String, nullable=False)
+
+#     quantity_needed = db.Column(db.Numeric, nullable=False)
+#     urgency = db.Column(db.String, nullable=False)
+
+#     available_times = db.Column(JSONB, nullable=False)
+#     pickup_address = db.Column(db.Text, nullable=False)
+
+#     status = db.Column(db.String, nullable=False)
+
+#     tags = db.Column(ARRAY(db.String), nullable=True)
+#     banned_items = db.Column(ARRAY(db.String), nullable=True)
+
+#     created_at = db.Column(db.DateTime(timezone=True), nullable=False)
+#     updated_at = db.Column(db.DateTime(timezone=True), nullable=False)
+#     expires_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+#     food_bank = db.relationship("FoodBank", backref="postings")
+
+#     def to_json(self):
+#         return {
+#             "id": str(self.id),
+#             "food_bank_id": str(self.food_bank_id),
+#             "title": self.title,
+#             "description": self.description,
+#             "food_type": self.food_type,
+#             "quantity_needed": float(self.quantity_needed)
+#             if self.quantity_needed is not None else None,
+#             "urgency": self.urgency,
+#             "available_times": self.available_times,
+#             "pickup_address": self.pickup_address,
+#             "status": self.status,
+#             "tags": self.tags,
+#             "banned_items": self.banned_items,
+#             "created_at": self.created_at.isoformat() if self.created_at else None,
+#             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+#             "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+#         }
+
+
 class DonationPosting(db.Model):
     __tablename__ = "donation_postings"
 
@@ -102,24 +154,17 @@ class DonationPosting(db.Model):
         nullable=False,
     )
 
-    title = db.Column(db.String, nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    food_type = db.Column(db.String, nullable=False)
-
-    quantity_needed = db.Column(db.Numeric, nullable=False)
+    food_name = db.Column(db.String, nullable=False)
     urgency = db.Column(db.String, nullable=False)
+    qty_needed = db.Column(db.Numeric, nullable=False)
+    
+    from_date = db.Column(db.Date, nullable=False)
+    to_date = db.Column(db.Date, nullable=False)
+    from_time = db.Column(db.Time, nullable=False)
+    to_time = db.Column(db.Time, nullable=False)
 
-    available_times = db.Column(JSONB, nullable=False)
-    pickup_address = db.Column(db.Text, nullable=False)
-
-    status = db.Column(db.String, nullable=False)
-
-    tags = db.Column(ARRAY(db.String), nullable=True)
-    banned_items = db.Column(ARRAY(db.String), nullable=True)
-
-    created_at = db.Column(db.DateTime(timezone=True), nullable=False)
-    updated_at = db.Column(db.DateTime(timezone=True), nullable=False)
-    expires_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    created_at = db.Column(db.DateTime(timezone=False), nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=False), nullable=False)
 
     food_bank = db.relationship("FoodBank", backref="postings")
 
@@ -127,21 +172,73 @@ class DonationPosting(db.Model):
         return {
             "id": str(self.id),
             "food_bank_id": str(self.food_bank_id),
-            "title": self.title,
-            "description": self.description,
-            "food_type": self.food_type,
-            "quantity_needed": float(self.quantity_needed)
-            if self.quantity_needed is not None else None,
+            "food_name": self.food_name,
             "urgency": self.urgency,
-            "available_times": self.available_times,
-            "pickup_address": self.pickup_address,
-            "status": self.status,
-            "tags": self.tags,
-            "banned_items": self.banned_items,
+            "qty_needed": float(self.qty_needed) if self.qty_needed is not None else None,
+            "from_date": self.from_date.isoformat() if self.from_date else None,
+            "to_date": self.to_date.isoformat() if self.to_date else None,
+            "from_time": self.from_time.isoformat() if self.from_time else None,
+            "to_time": self.to_time.isoformat() if self.to_time else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
         }
+
+# class Meetup(db.Model):
+#     __tablename__ = "meetups"
+
+#     id = db.Column(UUID(as_uuid=True), primary_key=True)
+
+#     posting_id = db.Column(
+#         UUID(as_uuid=True),
+#         db.ForeignKey("donation_postings.id"),
+#         nullable=False,
+#     )
+#     donor_id = db.Column(
+#         UUID(as_uuid=True),
+#         db.ForeignKey("donors.id"),
+#         nullable=False,
+#     )
+#     food_bank_id = db.Column(
+#         UUID(as_uuid=True),
+#         db.ForeignKey("food_banks.id"),
+#         nullable=False,
+#     )
+
+#     status = db.Column(db.String, nullable=False)
+#     scheduled_time = db.Column(db.DateTime(timezone=True), nullable=False)
+
+#     donation_items = db.Column(db.Text, nullable=False)
+#     quantity = db.Column(db.Numeric, nullable=True)
+
+#     notes = db.Column(db.Text, nullable=True)
+#     completion_notes = db.Column(db.Text, nullable=True)
+
+#     completed_at = db.Column(db.DateTime(timezone=True), nullable=True)
+#     created_at = db.Column(db.DateTime(timezone=True), nullable=False)
+#     updated_at = db.Column(db.DateTime(timezone=True), nullable=False)
+
+#     posting = db.relationship("DonationPosting", backref="meetups")
+#     donor = db.relationship("Donor", backref="meetups")
+#     food_bank = db.relationship("FoodBank", backref="meetups")
+
+#     def to_json(self):
+#         return {
+#             "id": str(self.id),
+#             "posting_id": str(self.posting_id),
+#             "donor_id": str(self.donor_id),
+#             "food_bank_id": str(self.food_bank_id),
+#             "status": self.status,
+#             "scheduled_time": self.scheduled_time.isoformat()
+#             if self.scheduled_time else None,
+#             "donation_items": self.donation_items,
+#             "quantity": float(self.quantity) if self.quantity is not None else None,
+#             "notes": self.notes,
+#             "completion_notes": self.completion_notes,
+#             "completed_at": self.completed_at.isoformat()
+#             if self.completed_at else None,
+#             "created_at": self.created_at.isoformat() if self.created_at else None,
+#             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+#         }
 
 
 class Meetup(db.Model):
@@ -165,16 +262,14 @@ class Meetup(db.Model):
         nullable=False,
     )
 
-    status = db.Column(db.String, nullable=False)
-    scheduled_time = db.Column(db.DateTime(timezone=True), nullable=False)
-
-    donation_items = db.Column(db.Text, nullable=False)
-    quantity = db.Column(db.Numeric, nullable=True)
-
-    notes = db.Column(db.Text, nullable=True)
-    completion_notes = db.Column(db.Text, nullable=True)
-
+    donation_item = db.Column(db.String, nullable=False)
+    quantity = db.Column(db.Numeric, nullable=False)
+    scheduled_date = db.Column(db.Date, nullable=False)
+    scheduled_time = db.Column(db.Time, nullable=False)
+    
+    completed = db.Column(db.Boolean, nullable=False, default=False)
     completed_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    
     created_at = db.Column(db.DateTime(timezone=True), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), nullable=False)
 
@@ -188,13 +283,13 @@ class Meetup(db.Model):
             "posting_id": str(self.posting_id),
             "donor_id": str(self.donor_id),
             "food_bank_id": str(self.food_bank_id),
-            "status": self.status,
+            "donation_item": self.donation_item,
+            "quantity": float(self.quantity) if self.quantity is not None else None,
+            "scheduled_date": self.scheduled_date.isoformat()
+            if self.scheduled_date else None,
             "scheduled_time": self.scheduled_time.isoformat()
             if self.scheduled_time else None,
-            "donation_items": self.donation_items,
-            "quantity": float(self.quantity) if self.quantity is not None else None,
-            "notes": self.notes,
-            "completion_notes": self.completion_notes,
+            "completed": self.completed,
             "completed_at": self.completed_at.isoformat()
             if self.completed_at else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,

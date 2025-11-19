@@ -223,12 +223,12 @@ def create_donation_posting():
     data = request.get_json(silent=True) or {}
 
     food_bank_id = data.get("food_bank_id")
-    title = (data.get("title") or "").strip()
-    food_type = (data.get("food_type") or "").strip()
+    food_name = data.get("food_name")
+    urgency = data.get("urgency")
 
-    if not food_bank_id or not title or not food_type:
+    if not food_bank_id or not food_name or not urgency:
         return jsonify(
-            {"error": "food_bank_id, title, and food_type are required"}
+            {"error": "food_bank_id, food_name, and urgency are required"}
         ), 400
 
     qty_needed = data.get("quantity_needed")
@@ -236,38 +236,34 @@ def create_donation_posting():
         return jsonify({"error": "quantity_needed is required"}), 400
 
     try:
-        quantity_needed = Decimal(str(qty_needed)).quantize(Decimal("0.01"))
+        qty_needed = Decimal(str(qty_needed)).quantize(Decimal("0.01"))
     except (InvalidOperation, ValueError, TypeError):
         return jsonify({"error": "quantity_needed must be a number"}), 400
 
-    available_times = data.get("available_times")
-    if available_times is None:
-        return jsonify({"error": "available_times is required"}), 400
+    from_date = data.get("from_date")
+    to_date = data.get("to_date")
+    from_time = data.get("from_time")
+    to_time = data.get("to_time")
 
-    pickup_address = (data.get("pickup_address") or "").strip()
-    if not pickup_address:
-        return jsonify({"error": "pickup_address is required"}), 400
+    if not from_date or not to_date or not from_time or not to_time:
+        return jsonify({"error": "either from_date, to_date, from_time, to_time is missing"}), 400
 
     posting = DonationPosting(
         id=uuid4(),
         food_bank_id=food_bank_id,
-        title=title,
-        description=data.get("description"),
-        food_type=food_type,
-        quantity_needed=quantity_needed,
-        urgency=data.get("urgency") or "medium",
-        available_times=available_times,
-        pickup_address=pickup_address,
-        status=data.get("status") or "active",
-        tags=data.get("tags"),
-        banned_items=data.get("banned_items"),
-        expires_at=None,
+        food_name = food_name,
+        urgency = urgency,
+        qty_needed = qty_needed,
+        from_date = from_date,
+        to_date = to_date,
+        from_time = from_time,
+        to_time = to_time,
     )
-
+    
     db.session.add(posting)
     db.session.commit()
 
-    _index_posting_in_trie(posting)
+    # _index_posting_in_trie(posting)
 
     return jsonify(posting.to_json()), 201
 
@@ -338,27 +334,66 @@ def search_postings():
 @app.get("/api/meetups")
 def list_meetups():
     """
-    List meetups (pledged donations).
+    List meetups (scheduled donations).
+    Optional filters: donor_id, food_bank_id, posting_id, completed (true/false)
     """
     donor_id = request.args.get("donor_id")
     food_bank_id = request.args.get("food_bank_id")
+    posting_id = request.args.get("posting_id")
+    completed = request.args.get("completed")
 
     query = Meetup.query
     if donor_id:
-        query = query.filter_by(donor_id=donor_id)
+        try:
+            donor_uuid = UUID(donor_id)
+            query = query.filter_by(donor_id=donor_uuid)
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid donor_id format"}), 400
+            
     if food_bank_id:
-        query = query.filter_by(food_bank_id=food_bank_id)
+        try:
+            fb_uuid = UUID(food_bank_id)
+            query = query.filter_by(food_bank_id=fb_uuid)
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid food_bank_id format"}), 400
 
-    meetups = query.order_by(Meetup.created_at.desc()).all()
+    if posting_id:
+        try:
+            posting_uuid = UUID(posting_id)
+            query = query.filter_by(posting_id=posting_uuid)
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid posting_id format"}), 400
+            
+    if completed is not None:
+        is_completed = completed.lower() in ('true', '1', 'yes')
+        query = query.filter_by(completed=is_completed)
+
+    meetups = query.order_by(Meetup.scheduled_date.desc(), Meetup.scheduled_time.desc()).all()
     return jsonify({"meetups": [m.to_json() for m in meetups]})
 
+
+@app.get("/api/donors/<donor_id>")
+def get_donor(donor_id):
+    """
+    Get a specific donor's details.
+    """
+    try:
+        donor_uuid = UUID(donor_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid donor_id format"}), 400
+    
+    donor = Donor.query.filter_by(id=donor_uuid).first()
+    if not donor:
+        return jsonify({"error": "Donor not found"}), 404
+    
+    return jsonify(donor.to_json())
 
 @app.post("/api/meetups")
 def create_meetup():
     """
     Create a new meetup.
     Required fields: posting_id, donor_id, food_bank_id,
-    scheduled_time, donation_items.
+    scheduled_date, scheduled_time, donation_item, quantity
     """
     data = request.get_json(silent=True) or {}
 
@@ -371,44 +406,87 @@ def create_meetup():
             {"error": "posting_id, donor_id, and food_bank_id are required"}
         ), 400
 
+    # Validate UUIDs
+    try:
+        posting_uuid = UUID(posting_id)
+        donor_uuid = UUID(donor_id)
+        fb_uuid = UUID(food_bank_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid UUID format"}), 400
+
+    # Validate scheduled_date and scheduled_time
+    scheduled_date_str = data.get("scheduled_date")
     scheduled_time_str = data.get("scheduled_time")
-    if not scheduled_time_str:
-        return jsonify(
-            {"error": "scheduled_time is required"}
-        ), 400
+    
+    if not scheduled_date_str or not scheduled_time_str:
+        return jsonify({"error": "scheduled_date and scheduled_time are required"}), 400
 
     try:
-        scheduled_time = datetime.fromisoformat(scheduled_time_str)
-    except ValueError:
+        from datetime import date, time
+        scheduled_date = date.fromisoformat(scheduled_date_str)
+        # Handle time format like "14:30" or "14:30:00"
+        time_parts = scheduled_time_str.split(':')
+        if len(time_parts) == 2:
+            scheduled_time = time(int(time_parts[0]), int(time_parts[1]))
+        elif len(time_parts) == 3:
+            scheduled_time = time(int(time_parts[0]), int(time_parts[1]), int(time_parts[2]))
+        else:
+            raise ValueError("Invalid time format")
+    except (ValueError, TypeError) as e:
         return jsonify(
-            {"error": "scheduled_time must be ISO 8601 datetime string"}
+            {"error": f"Invalid date/time format. Use YYYY-MM-DD for date and HH:MM for time. Error: {str(e)}"}
         ), 400
 
-    donation_items = (data.get("donation_items") or "").strip()
-    if not donation_items:
-        return jsonify({"error": "donation_items is required"}), 400
+    # Validate donation_item
+    donation_item = (data.get("donation_item") or data.get("donation_items") or "").strip()
+    if not donation_item:
+        return jsonify({"error": "donation_item is required"}), 400
 
-    qty = None
-    if data.get("quantity") is not None:
-        try:
-            qty = Decimal(str(data["quantity"])).quantize(Decimal("0.01"))
-        except (InvalidOperation, ValueError, TypeError):
-            return jsonify({"error": "quantity must be a number"}), 400
+    # Validate quantity
+    quantity = data.get("quantity")
+    if quantity is None:
+        return jsonify({"error": "quantity is required"}), 400
+
+    try:
+        qty = Decimal(str(quantity)).quantize(Decimal("0.01"))
+    except (InvalidOperation, ValueError, TypeError):
+        return jsonify({"error": "quantity must be a number"}), 400
+
+    # Check if posting exists
+    posting = DonationPosting.query.filter_by(id=posting_uuid).first()
+    if not posting:
+        return jsonify({"error": "Donation posting not found"}), 404
+
+    # Check if donor exists
+    donor = Donor.query.filter_by(id=donor_uuid).first()
+    if not donor:
+        return jsonify({"error": "Donor not found"}), 404
+
+    # Check if food bank exists
+    food_bank = FoodBank.query.filter_by(id=fb_uuid).first()
+    if not food_bank:
+        return jsonify({"error": "Food bank not found"}), 404
+
+    now = datetime.utcnow()
 
     meetup = Meetup(
-        posting_id=posting_id,
-        donor_id=donor_id,
-        food_bank_id=food_bank_id,
-        status=data.get("status") or "pending",
-        scheduled_time=scheduled_time,
-        donation_items=donation_items,
+        id=uuid4(),
+        posting_id=posting_uuid,
+        donor_id=donor_uuid,
+        food_bank_id=fb_uuid,
+        donation_item=donation_item,
         quantity=qty,
-        notes=data.get("notes"),
-        completion_notes=data.get("completion_notes"),
+        scheduled_date=scheduled_date,
+        scheduled_time=scheduled_time,
+        completed=False,
+        completed_at=None,
+        created_at=now,
+        updated_at=now,
     )
 
     db.session.add(meetup)
     db.session.commit()
+    
     return jsonify(meetup.to_json()), 201
 
 
@@ -460,12 +538,11 @@ def leaderboard():
 
 
 if __name__ == "__main__":
-    with app.app_context():
-        try:
-            _build_trie_from_db()
-        except Exception as e:
-            print("WARNING: Could not build Trie from DB at startup:", repr(e))
-            import traceback
-            traceback.print_exc()
-
+    # with app.app_context():
+    #     try:
+    #         _build_trie_from_db()
+    #     except Exception as e:
+    #         print("WARNING: Could not build Trie from DB at startup:", repr(e))
+    #         import traceback
+    #         traceback.print_exc()
     app.run(debug=True, port=5000)

@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import "./DashboardFoodBank.css";
+import { useAuth } from '../contexts/AuthContext'
 
 function DashboardFoodBank() {
   const [foodItems, setFoodItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [donorsForItem, setDonorsForItem] = useState([]);
   const [showPostModal, setShowPostModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [donorsLoading, setDonorsLoading] = useState(false);
   const [postForm, setPostForm] = useState({
     foodName: '',
     urgency: 'Medium',
@@ -16,49 +20,154 @@ function DashboardFoodBank() {
     toTime: ''
   });
 
-  useEffect(() => {
-    // Mock data: Food items the food bank needs
-    setFoodItems([
-      { id: 1, name: 'Rice', urgency: 'High', quantityNeeded: '50 lbs', donorCount: 3 },
-      { id: 2, name: 'Milk', urgency: 'Medium', quantityNeeded: '20 gallons', donorCount: 2 },
-      { id: 3, name: 'Chocolate', urgency: 'Low', quantityNeeded: '10 lbs', donorCount: 1 },
-      { id: 4, name: 'Canned Goods', urgency: 'High', quantityNeeded: '100 cans', donorCount: 5 },
-      { id: 5, name: 'Fresh Produce', urgency: 'High', quantityNeeded: '30 lbs', donorCount: 2 }
-    ]);
-  }, []);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const { user } = useAuth();
 
-  const handleItemClick = (item) => {
-    setSelectedItem(item);
-    
-    // Mock data: Donors for the specific food item
-    // In real app, this would be an API call based on item.id
-    const mockDonors = {
-      1: [
-        { id: 1, name: 'Gordon Ramsay', quantity: '25 lbs', distance: '2.3 miles', verified: true },
-        { id: 2, name: 'Jamie Oliver', quantity: '15 lbs', distance: '1.5 miles', verified: true },
-        { id: 3, name: 'Local Grocery Store', quantity: '50 lbs', distance: '3.1 miles', verified: false }
-      ],
-      2: [ // Milk donors
-        { id: 4, name: 'Sydney Sweeney', quantity: '10 gallons', distance: '1.2 miles', verified: true },
-        { id: 5, name: 'Dairy Farm Co', quantity: '15 gallons', distance: '5.0 miles', verified: true }
-      ],
-      3: [ // Chocolate donors
-        { id: 6, name: 'Wonka Factory', quantity: '10 lbs', distance: '4.5 miles', verified: true }
-      ],
-      4: [ // Canned Goods donors
-        { id: 7, name: 'Gordon Ramsay', quantity: '50 cans', distance: '2.3 miles', verified: true },
-        { id: 8, name: 'Community Center', quantity: '30 cans', distance: '1.8 miles', verified: true },
-        { id: 9, name: 'Local Grocery Store', quantity: '100 cans', distance: '3.1 miles', verified: false },
-        { id: 10, name: 'Food Drive Org', quantity: '75 cans', distance: '2.9 miles', verified: true },
-        { id: 11, name: 'School Cafeteria', quantity: '40 cans', distance: '1.1 miles', verified: true }
-      ],
-      5: [ // Fresh Produce donors
-        { id: 12, name: 'Community Garden', quantity: '20 lbs', distance: '0.8 miles', verified: true },
-        { id: 13, name: 'Farmers Market', quantity: '15 lbs', distance: '2.5 miles', verified: true }
-      ]
+  const FOOD_BANK_ID = user?.id;
+
+  // Fetch donation postings and their donor counts
+  useEffect(() => {
+    const fetchDonationPostings = async () => {
+      if (!FOOD_BANK_ID) {
+        setError('User not logged in');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `http://127.0.0.1:5000/api/donation_postings?food_bank_id=${FOOD_BANK_ID}`
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch donation postings');
+        }
+
+        const data = await response.json();
+        
+        // For each posting, fetch the number of meetups (donors)
+        const postingsWithDonorCounts = await Promise.all(
+          data.postings.map(async (posting) => {
+            try {
+              const meetupsResponse = await fetch(
+                `http://127.0.0.1:5000/api/meetups?posting_id=${posting.id}`
+              );
+              
+              let donorCount = 0;
+              if (meetupsResponse.ok) {
+                const meetupsData = await meetupsResponse.json();
+                donorCount = meetupsData.meetups?.length || 0;
+              }
+
+              return {
+                id: posting.id,
+                name: posting.food_name,
+                urgency: posting.urgency,
+                quantityNeeded: `${posting.qty_needed} lbs`,
+                donorCount: donorCount,
+                fromDate: posting.from_date,
+                toDate: posting.to_date,
+                fromTime: posting.from_time,
+                toTime: posting.to_time,
+              };
+            } catch (err) {
+              console.error(`Error fetching meetups for posting ${posting.id}:`, err);
+              return {
+                id: posting.id,
+                name: posting.food_name,
+                urgency: posting.urgency,
+                quantityNeeded: `${posting.qty_needed} lbs`,
+                donorCount: 0,
+                fromDate: posting.from_date,
+                toDate: posting.to_date,
+                fromTime: posting.from_time,
+                toTime: posting.to_time,
+              };
+            }
+          })
+        );
+
+        setFoodItems(postingsWithDonorCounts);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching donation postings:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setDonorsForItem(mockDonors[item.id] || []);
+    if (user) {
+      fetchDonationPostings();
+    }
+  }, [FOOD_BANK_ID, user]);
+
+  const handleItemClick = async (item) => {
+    setSelectedItem(item);
+    setDonorsLoading(true);
+    
+    try {
+      // Fetch meetups for this posting
+      const meetupsResponse = await fetch(
+        `http://127.0.0.1:5000/api/meetups?posting_id=${item.id}`
+      );
+      
+      if (!meetupsResponse.ok) {
+        throw new Error('Failed to fetch meetups');
+      }
+
+      const meetupsData = await meetupsResponse.json();
+      const meetups = meetupsData.meetups || [];
+
+      // Fetch donor details for each meetup
+      const donorsWithDetails = await Promise.all(
+        meetups.map(async (meetup) => {
+          try {
+            // Fetch donor profile
+            const donorResponse = await fetch(
+              `http://127.0.0.1:5000/api/donors/${meetup.donor_id}`
+            );
+
+            let donorName = 'Unknown Donor';
+            if (donorResponse.ok) {
+              const donorData = await donorResponse.json();
+              donorName = `${donorData.first_name} ${donorData.last_name}`;
+            }
+
+            return {
+              id: meetup.id,
+              name: donorName,
+              quantity: `${meetup.quantity} lbs`,
+              scheduledDate: meetup.scheduled_date,
+              scheduledTime: meetup.scheduled_time,
+              completed: meetup.completed,
+              verified: true, // You can add verification logic later
+            };
+          } catch (err) {
+            console.error(`Error fetching donor ${meetup.donor_id}:`, err);
+            return {
+              id: meetup.id,
+              name: 'Unknown Donor',
+              quantity: `${meetup.quantity} lbs`,
+              scheduledDate: meetup.scheduled_date,
+              scheduledTime: meetup.scheduled_time,
+              completed: meetup.completed,
+              verified: false,
+            };
+          }
+        })
+      );
+
+      setDonorsForItem(donorsWithDetails);
+    } catch (err) {
+      console.error('Error fetching donors for item:', err);
+      setError('Failed to load donors for this item');
+      setDonorsForItem([]);
+    } finally {
+      setDonorsLoading(false);
+    }
   };
 
   const handleBackToItems = () => {
@@ -81,6 +190,7 @@ function DashboardFoodBank() {
       fromTime: '',
       toTime: ''
     });
+    setSubmitError(null);
   };
 
   const handleFormChange = (e) => {
@@ -90,14 +200,89 @@ function DashboardFoodBank() {
     });
   };
 
-  const handleSubmitPost = (e) => {
+  const handleSubmitPost = async (e) => {
     e.preventDefault();
-    console.log('Donation post submitted:', postForm);
-    // Handle form submission here
-    handleClosePostModal();
+    setSubmitLoading(true);
+    setSubmitError(null);
+    
+    if (!user || !user.id) {
+      setSubmitError('You must be logged in as a Food Bank to create a post');
+      setSubmitLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://127.0.0.1:5000/api/donation_postings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          food_bank_id: user.id,
+          food_name: postForm.foodName,
+          urgency: postForm.urgency,
+          quantity_needed: parseFloat(postForm.quantityNeeded),
+          from_date: postForm.fromDate,
+          to_date: postForm.toDate,
+          from_time: postForm.fromTime,
+          to_time: postForm.toTime,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create donation post');
+      }
+
+      const data = await response.json();
+      console.log('Donation post created:', data);
+
+      const newItem = {
+        id: data.id,
+        name: data.food_name,
+        urgency: data.urgency,
+        quantityNeeded: `${data.qty_needed} lbs`,
+        donorCount: 0,
+        fromDate: data.from_date,
+        toDate: data.to_date,
+        fromTime: data.from_time,
+        toTime: data.to_time,
+      };
+      setFoodItems([newItem, ...foodItems]);
+
+      handleClosePostModal();
+
+    } catch (error) {
+      console.error('Error creating donation post:', error);
+      setSubmitError(error.message);
+    } finally {
+      setSubmitLoading(false);
+    }
   };
 
+  if (loading) {
+    return (
+      <div id="dashboard">
+        <div className="dashboard-grid">
+          <div className="main-content">
+            <p>Loading donation postings...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
+  if (error && !user) {
+    return (
+      <div id="dashboard">
+        <div className="dashboard-grid">
+          <div className="main-content">
+            <p style={{ color: 'red' }}>Error: {error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div id="dashboard">
@@ -122,26 +307,36 @@ function DashboardFoodBank() {
                   </div>
               </div>
 
+              {error && (
+                <div style={{ color: 'red', padding: '10px', marginBottom: '10px' }}>
+                  Error: {error}
+                </div>
+              )}
+
               <div className="items-list">
-                {foodItems.map(item => (
-                  <div 
-                    key={item.id} 
-                    className="item-card clickable"
-                    onClick={() => handleItemClick(item)}
-                  >
-                    <div className="item-info">
-                      <h3>
-                        {item.name}
-                        <span className={`urgency-badge ${item.urgency.toLowerCase()}`}>
-                          {item.urgency}
-                        </span>
-                      </h3>
-                      <p className="quantity">Need: {item.quantityNeeded}</p>
-                      <p className="donor-count">{item.donorCount} donor{item.donorCount !== 1 ? 's' : ''} available</p>
+                {foodItems.length === 0 ? (
+                  <p>No donation postings yet. Create one to get started!</p>
+                ) : (
+                  foodItems.map(item => (
+                    <div 
+                      key={item.id} 
+                      className="item-card clickable"
+                      onClick={() => handleItemClick(item)}
+                    >
+                      <div className="item-info">
+                        <h3>
+                          {item.name}
+                          <span className={`urgency-badge ${item.urgency.toLowerCase()}`}>
+                            {item.urgency}
+                          </span>
+                        </h3>
+                        <p className="quantity">Need: {item.quantityNeeded}</p>
+                        <p className="donor-count">{item.donorCount} donor{item.donorCount !== 1 ? 's' : ''} scheduled</p>
+                      </div>
+                      <button className="view-donors-btn">View Donors →</button>
                     </div>
-                    <button className="view-donors-btn">View Donors →</button>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </>
           ) : (
@@ -153,25 +348,42 @@ function DashboardFoodBank() {
                 <h2>Donors for {selectedItem.name}</h2>
               </div>
 
-              <div className="items-list">
-                {donorsForItem.length > 0 ? (
-                  donorsForItem.map(donor => (
-                    <div key={donor.id} className="item-card">
-                      <div className="item-info">
-                        <h3>
-                          {donor.name} 
-                          {donor.verified && <span className="verified">✓</span>}
-                        </h3>
-                        <p className="quantity">Available: {donor.quantity}</p>
-                        <p className="distance">{donor.distance} away</p>
+              {donorsLoading ? (
+                <p>Loading donors...</p>
+              ) : (
+                <div className="items-list">
+                  {donorsForItem.length > 0 ? (
+                    donorsForItem.map(donor => (
+                      <div key={donor.id} className="item-card">
+                        <div className="item-info">
+                          <h3>
+                            {donor.name} 
+                            {donor.verified && <span className="verified">✓</span>}
+                          </h3>
+                          <p className="quantity">Donating: {donor.quantity}</p>
+                          <p className="distance">
+                            Scheduled: {donor.scheduledDate} at {donor.scheduledTime}
+                          </p>
+                          {donor.completed && (
+                            <span className="completed-badge" style={{ 
+                              backgroundColor: '#4caf50', 
+                              color: 'white', 
+                              padding: '2px 8px', 
+                              borderRadius: '4px',
+                              fontSize: '0.85em'
+                            }}>
+                              Completed
+                            </span>
+                          )}
+                        </div>
+                        <button className="contact-btn">Contact</button>
                       </div>
-                      <button className="contact-btn">Contact</button>
-                    </div>
-                  ))
-                ) : (
-                  <p className="no-donors">No donors available for this item yet.</p>
-                )}
-              </div>
+                    ))
+                  ) : (
+                    <p className="no-donors">No donors scheduled for this item yet.</p>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>
@@ -184,6 +396,12 @@ function DashboardFoodBank() {
               <h2>Make Donation Post</h2>
               <button className="close-btn" onClick={handleClosePostModal}>×</button>
             </div>
+
+            {submitError && (
+              <div className="error-message" style={{ color: 'red', padding: '10px', marginBottom: '10px' }}>
+                {submitError}
+              </div>
+            )}
             
             <form onSubmit={handleSubmitPost}>
               <div className="form-group">
@@ -274,7 +492,9 @@ function DashboardFoodBank() {
                   required
                 />
               </div>
-              <button type="submit" className="submit-btn">Submit</button>
+              <button type="submit" className="submit-btn" disabled={submitLoading}>
+                {submitLoading ? 'Submitting...' : 'Submit'}
+              </button>
             </form>
           </div>
         </div>
