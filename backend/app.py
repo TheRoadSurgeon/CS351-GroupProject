@@ -67,6 +67,129 @@ def _build_trie_from_db():
     print(f"\nIndexed words: {sorted(indexed_words)}")
 
 
+# --- User Profile Creation API ---
+
+@app.post("/api/profiles")
+def create_profile():
+    """
+    Create a profile and associated donor or food_bank record after Supabase registration.
+    """
+    data = request.get_json(silent=True) or {}
+    
+    user_id = data.get("user_id")
+    email = data.get("email")
+    role = data.get("role")
+    
+    if not user_id or not email or not role:
+        return jsonify({"error": "user_id, email, and role are required"}), 400
+    
+    try:
+        # Convert user_id string to UUID
+        from uuid import UUID
+        user_uuid = UUID(user_id)
+        
+        now = datetime.utcnow()
+        
+        # Check if profile already exists
+        existing_profile = Profile.query.filter_by(id=user_uuid).first()
+        
+        if not existing_profile:
+            # Create Profile
+            profile = Profile(
+                id=user_uuid,
+                email=email,
+                role=role,
+                created_at=now,
+                updated_at=now
+            )
+            db.session.add(profile)
+        else:
+            profile = existing_profile
+        
+        # Create role-specific record
+        if role == "Donor":
+            # Check if donor already exists
+            existing_donor = Donor.query.filter_by(id=user_uuid).first()
+            if existing_donor:
+                return jsonify({
+                    "message": "Donor profile already exists",
+                    "profile": profile.to_json()
+                }), 200
+            
+            first_name = data.get("first_name")
+            last_name = data.get("last_name")
+            phone = data.get("phone")
+            address = data.get("address")
+            city = data.get("city")
+            state = data.get("state")
+            postal_code = data.get("postalCode")
+            
+            if not all([first_name, last_name, phone, address, city, state, postal_code]):
+                return jsonify({"error": "first_name, last_name, phone, address, city, state, and postalCode are required for Donor"}), 400
+
+            donor = Donor(
+                id=user_uuid,
+                first_name=first_name,
+                last_name=last_name or "",
+                phone=phone,
+                address=address,
+                city=city,
+                state=state,
+                postal_code=postal_code,
+                created_at=now,
+                updated_at=now
+            )
+            db.session.add(donor)
+            
+        elif role == "Food Bank":
+            # Check if food bank already exists
+            existing_food_bank = FoodBank.query.filter_by(id=user_uuid).first()
+            if existing_food_bank:
+                return jsonify({
+                    "message": "Food Bank profile already exists",
+                    "profile": profile.to_json()
+                }), 200
+            
+            name = data.get("name")
+            phone = data.get("phone")
+            address = data.get("address")
+            city = data.get("city")
+            state = data.get("state")
+            postal_code = data.get("postalCode")
+            
+            if not all([name, phone, address, city, state, postal_code]):
+                return jsonify({"error": "name, phone, address, city, state, and postalCode are required for Food Bank"}), 400
+            
+            food_bank = FoodBank(
+                id=user_uuid,
+                name=name,
+                phone=phone,
+                address=address,
+                city=city,
+                state=state,
+                postal_code=postal_code,
+                created_at=now,
+                updated_at=now
+            )
+            db.session.add(food_bank)
+        else:
+            return jsonify({"error": "Invalid role. Must be 'Donor' or 'Food Bank'"}), 400
+        
+        db.session.commit()
+        
+        return jsonify({
+            "message": "Profile created successfully",
+            "profile": profile.to_json()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        print(f"Error creating profile: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+
 # --- Food banks API ---
 
 @app.get("/api/food_banks")

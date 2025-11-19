@@ -32,6 +32,10 @@ class Donor(db.Model):
     first_name = db.Column(db.String, nullable=False)
     last_name = db.Column(db.String, nullable=True)
     phone = db.Column(db.String, nullable=True)
+    address = db.Column(db.String, nullable=True)
+    city = db.Column(db.String, nullable=True)
+    state = db.Column(db.String, nullable=True)
+    postal_code = db.Column(db.String, nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), nullable=False)
 
@@ -43,6 +47,10 @@ class Donor(db.Model):
             "first_name": self.first_name,
             "last_name": self.last_name,
             "phone": self.phone,
+            "address": self.address,
+            "city": self.city,
+            "state": self.state,
+            "postal_code": self.postal_code,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
@@ -60,7 +68,7 @@ class FoodBank(db.Model):
     name = db.Column(db.String, nullable=False)
     phone = db.Column(db.String, nullable=True)
     # maps to the "address" column in the database
-    address1 = db.Column("address", db.String, nullable=False)
+    address = db.Column("address", db.String, nullable=False)
     city = db.Column(db.String, nullable=False)
     state = db.Column(db.String, nullable=False)
     postal_code = db.Column(db.String, nullable=False)
@@ -75,7 +83,7 @@ class FoodBank(db.Model):
             "id": str(self.id),
             "name": self.name,
             "phone": self.phone,
-            "address1": self.address1,
+            "address": self.address,
             "city": self.city,
             "state": self.state,
             "postal_code": self.postal_code,

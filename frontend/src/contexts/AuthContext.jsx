@@ -32,19 +32,46 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   // Sign up with email and password
-  const signUp = async (email, password, role) => {
+  const signUp = async (email, password, role, additionalData = {}) => {
     try {
+      // Create Supabase auth user
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             role: role, // Store role in user metadata
+            ...additionalData, // Store additional data
           }
         }
       })
       
       if (error) throw error
+      
+      // Create profile in database
+      if (data.user) {
+        const profilePayload = {
+          user_id: data.user.id,
+          email: email,
+          role: role,
+          ...additionalData
+        }
+        
+        // Call backend to create profile
+        const profileResponse = await fetch('http://127.0.0.1:5000/api/profiles', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(profilePayload)
+        })
+        
+        if (!profileResponse.ok) {
+          const errorData = await profileResponse.json()
+          throw new Error(errorData.error || 'Failed to create profile')
+        }
+      }
+      
       return { data, error: null }
     } catch (error) {
       return { data: null, error: error.message }
