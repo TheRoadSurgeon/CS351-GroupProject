@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import "./DashboardFoodBank.css";
+import { useAuth } from '../contexts/AuthContext'
 
 function DashboardFoodBank() {
   const [foodItems, setFoodItems] = useState([]);
@@ -16,6 +17,12 @@ function DashboardFoodBank() {
     toTime: ''
   });
 
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const { user } = useAuth();
+
+  const FOOD_BANK_ID = user.id;
+
   useEffect(() => {
     // Mock data: Food items the food bank needs
     setFoodItems([
@@ -25,6 +32,7 @@ function DashboardFoodBank() {
       { id: 4, name: 'Canned Goods', urgency: 'High', quantityNeeded: '100 cans', donorCount: 5 },
       { id: 5, name: 'Fresh Produce', urgency: 'High', quantityNeeded: '30 lbs', donorCount: 2 }
     ]);
+    console.log("This is the user", user)
   }, []);
 
   const handleItemClick = (item) => {
@@ -90,11 +98,54 @@ function DashboardFoodBank() {
     });
   };
 
-  const handleSubmitPost = (e) => {
+  const handleSubmitPost = async (e) => {
     e.preventDefault();
-    console.log('Donation post submitted:', postForm);
-    // Handle form submission here
-    handleClosePostModal();
+    setSubmitLoading(true);
+    setSubmitError(null);
+    
+    try {
+      const response = await fetch('http://127.0.0.1:5000/api/donation_postings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          food_bank_id: FOOD_BANK_ID,
+          food_name: postForm.foodName,
+          urgency: postForm.urgency,
+          quantity_needed: parseFloat(postForm.quantityNeeded),
+          from_date: postForm.fromDate,
+          to_date: postForm.toDate,
+          from_time: postForm.fromTime,
+          to_time: postForm.toTime,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create donation post');
+      }
+
+      const data = await response.json();
+      console.log('Donation post created:', data);
+
+      const newItem = {
+        id: data.id,
+        name: postForm.foodName,
+        urgency: postForm.urgency,
+        quantityNeeded: `${postForm.quantityNeeded} lbs`,
+        donorCount: 0
+      };
+      setFoodItems([newItem, ...foodItems]);
+
+      handleClosePostModal();
+
+    } catch (error) {
+      console.error('Error creating donation post:', error);
+      setSubmitError(error.message);
+    } finally {
+      setSubmitLoading(false);
+    }
   };
 
 
@@ -184,6 +235,12 @@ function DashboardFoodBank() {
               <h2>Make Donation Post</h2>
               <button className="close-btn" onClick={handleClosePostModal}>×</button>
             </div>
+
+            {submitError && (
+              <div className="error-message" style={{ color: 'red', padding: '10px', marginBottom: '10px' }}>
+                {submitError}
+              </div>
+            )}
             
             <form onSubmit={handleSubmitPost}>
               <div className="form-group">
@@ -274,7 +331,9 @@ function DashboardFoodBank() {
                   required
                 />
               </div>
-              <button type="submit" className="submit-btn">Submit</button>
+              <button type="submit" className="submit-btn" disabled={submitLoading}>
+                {submitLoading ? 'Submitting...' : 'Submit'}
+              </button>
             </form>
           </div>
         </div>

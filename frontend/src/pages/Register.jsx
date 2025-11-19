@@ -107,6 +107,7 @@ export default function Register() {
     }
 
     const { data, error } = await signUp(email, password, role, additionalData)
+    const userId = data?.user?.id;
     
     if (error) {
       setError(error)

@@ -223,12 +223,12 @@ def create_donation_posting():
     data = request.get_json(silent=True) or {}
 
     food_bank_id = data.get("food_bank_id")
-    title = (data.get("title") or "").strip()
-    food_type = (data.get("food_type") or "").strip()
+    food_name = data.get("food_name")
+    urgency = data.get("urgency")
 
-    if not food_bank_id or not title or not food_type:
+    if not food_bank_id or not food_name or not urgency:
         return jsonify(
-            {"error": "food_bank_id, title, and food_type are required"}
+            {"error": "food_bank_id, food_name, and urgency are required"}
         ), 400
 
     qty_needed = data.get("quantity_needed")
@@ -236,38 +236,34 @@ def create_donation_posting():
         return jsonify({"error": "quantity_needed is required"}), 400
 
     try:
-        quantity_needed = Decimal(str(qty_needed)).quantize(Decimal("0.01"))
+        qty_needed = Decimal(str(qty_needed)).quantize(Decimal("0.01"))
     except (InvalidOperation, ValueError, TypeError):
         return jsonify({"error": "quantity_needed must be a number"}), 400
 
-    available_times = data.get("available_times")
-    if available_times is None:
-        return jsonify({"error": "available_times is required"}), 400
+    from_date = data.get("from_date")
+    to_date = data.get("to_date")
+    from_time = data.get("from_time")
+    to_time = data.get("to_time")
 
-    pickup_address = (data.get("pickup_address") or "").strip()
-    if not pickup_address:
-        return jsonify({"error": "pickup_address is required"}), 400
+    if not from_date or not to_date or not from_time or not to_time:
+        return jsonify({"error": "either from_date, to_date, from_time, to_time is missing"}), 400
 
     posting = DonationPosting(
         id=uuid4(),
         food_bank_id=food_bank_id,
-        title=title,
-        description=data.get("description"),
-        food_type=food_type,
-        quantity_needed=quantity_needed,
-        urgency=data.get("urgency") or "medium",
-        available_times=available_times,
-        pickup_address=pickup_address,
-        status=data.get("status") or "active",
-        tags=data.get("tags"),
-        banned_items=data.get("banned_items"),
-        expires_at=None,
+        food_name = food_name,
+        urgency = urgency,
+        qty_needed = qty_needed,
+        from_date = from_date,
+        to_date = to_date,
+        from_time = from_time,
+        to_time = to_time,
     )
-
+    
     db.session.add(posting)
     db.session.commit()
 
-    _index_posting_in_trie(posting)
+    # _index_posting_in_trie(posting)
 
     return jsonify(posting.to_json()), 201
 
@@ -460,12 +456,11 @@ def leaderboard():
 
 
 if __name__ == "__main__":
-    with app.app_context():
-        try:
-            _build_trie_from_db()
-        except Exception as e:
-            print("WARNING: Could not build Trie from DB at startup:", repr(e))
-            import traceback
-            traceback.print_exc()
-
+    # with app.app_context():
+    #     try:
+    #         _build_trie_from_db()
+    #     except Exception as e:
+    #         print("WARNING: Could not build Trie from DB at startup:", repr(e))
+    #         import traceback
+    #         traceback.print_exc()
     app.run(debug=True, port=5000)
