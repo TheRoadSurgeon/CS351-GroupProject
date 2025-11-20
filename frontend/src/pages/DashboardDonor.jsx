@@ -26,6 +26,7 @@ function DashboardDonor() {
   });
   const [lastFetchTime, setLastFetchTime] = useState(null);
   const [foodBankItemsCache, setFoodBankItemsCache] = useState({});
+  const [sortBy, setSortBy] = useState('name'); // 'name' or 'items'
   const { user } = useAuth();
  
   
@@ -235,6 +236,14 @@ function DashboardDonor() {
     }
   };
 
+  // Sort food banks based on selected criteria
+  const sortedFoodBanks = [...nearbyFoodBanks].sort((a, b) => {
+    if (sortBy === 'items') {
+      return b.itemCount - a.itemCount; // Descending order (most items first)
+    }
+    return a.name.localeCompare(b.name); // Alphabetical order
+  });
+
   return (
     <div id="dashboard">
       <div className="dashboard-grid">
@@ -248,16 +257,15 @@ function DashboardDonor() {
               <div className="content-header">
                 <h2>Nearby Food Banks</h2>
                 <div className="filters">
-                  <select>
-                    <option>Within 5 miles</option>
-                    <option>Within 2 miles</option>
-                    <option>Within 1 mile</option>
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                    <option value="name">Sort by Name</option>
+                    <option value="items">Sort by Items Needed</option>
                   </select>
                 </div>
               </div>
 
               <div className="items-list">
-                {nearbyFoodBanks.map((bank) => (
+                {sortedFoodBanks.map((bank) => (
                   <div 
                     key={bank.id} 
                     className="item-card clickable"

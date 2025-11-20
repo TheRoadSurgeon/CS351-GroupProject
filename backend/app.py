@@ -27,19 +27,12 @@ trie_lock = Lock()
 def _index_posting_in_trie(posting):
     """
     Index one DonationPosting into the Trie.
-    We use title, description, tags, and banned_items so that
-    search can match on any of those words.
+    We use food_name so that search can match on it.
     """
     text_pieces = []
 
-    if posting.title:
-        text_pieces.append(posting.title)
-    if posting.description:
-        text_pieces.append(posting.description)
-    if posting.tags:
-        text_pieces.extend(posting.tags)
-    if posting.banned_items:
-        text_pieces.extend(posting.banned_items)
+    if posting.food_name:
+        text_pieces.append(posting.food_name)
 
     combined = " ".join(text_pieces)
     if not combined:
@@ -333,7 +326,7 @@ def create_donation_posting():
     db.session.add(posting)
     db.session.commit()
 
-    # _index_posting_in_trie(posting)
+    _index_posting_in_trie(posting)
 
     return jsonify(posting.to_json()), 201
 
@@ -343,8 +336,8 @@ def create_donation_posting():
 @app.get("/api/items/autocomplete")
 def autocomplete_items():
     """
-    Return word suggestions for a given prefix based on all
-    words we've seen in donation postings (title, description, tags, banned_items).
+    Return word suggestions for a given prefix based on food_name
+    from donation postings.
     Example: /api/items/autocomplete?q=can
     """
     prefix = (request.args.get("q") or "").strip()
@@ -363,7 +356,7 @@ def autocomplete_items():
 def search_postings():
     """
     Search donation postings by text prefix using the Trie.
-    Looks at words from title, description, tags, and banned_items.
+    Looks at words from food_name.
     Example: /api/search/postings?q=rice
     """
     prefix = (request.args.get("q") or "").strip()
@@ -858,11 +851,11 @@ def leaderboard():
 
 
 if __name__ == "__main__":
-    # with app.app_context():
-    #     try:
-    #         _build_trie_from_db()
-    #     except Exception as e:
-    #         print("WARNING: Could not build Trie from DB at startup:", repr(e))
-    #         import traceback
-    #         traceback.print_exc()
+    with app.app_context():
+        try:
+            _build_trie_from_db()
+        except Exception as e:
+            print("WARNING: Could not build Trie from DB at startup:", repr(e))
+            import traceback
+            traceback.print_exc()
     app.run(debug=True, port=5000)
