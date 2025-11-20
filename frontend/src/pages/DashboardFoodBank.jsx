@@ -31,6 +31,8 @@ function DashboardFoodBank() {
   });
   const [timeChangeLoading, setTimeChangeLoading] = useState(false);
   const [timeChangeError, setTimeChangeError] = useState(null);
+  const [lastFetchTime, setLastFetchTime] = useState(null);
+  const [donorsCache, setDonorsCache] = useState({});
   const { user } = useAuth();
 
   const FOOD_BANK_ID = user?.id;
@@ -40,6 +42,12 @@ useEffect(() => {
   const fetchDonationPostings = async () => {
     if (!FOOD_BANK_ID) {
       setError('User not logged in');
+      setLoading(false);
+      return;
+    }
+
+    const now = Date.now();
+    if (lastFetchTime && now - lastFetchTime < 30000) {
       setLoading(false);
       return;
     }
@@ -99,6 +107,7 @@ useEffect(() => {
       );
 
       setFoodItems(postingsWithDonorCounts);
+      setLastFetchTime(Date.now());
       setError(null);
     } catch (err) {
       console.error('Error fetching donation postings:', err);
@@ -111,7 +120,7 @@ useEffect(() => {
   if (user) {
     fetchDonationPostings();
   }
-}, [FOOD_BANK_ID, user]);
+}, [FOOD_BANK_ID, user, lastFetchTime]);
 
 const handleDeletePosting = async (itemId) => {
   if (!window.confirm('Are you sure you want to delete this donation posting? Scheduled meetups will remain visible in your Donations tab.')) {
@@ -140,6 +149,13 @@ const handleDeletePosting = async (itemId) => {
 
 const handleItemClick = async (item) => {
   setSelectedItem(item);
+  
+  // Check if we have cached data for this posting
+  if (donorsCache[item.id]) {
+    setDonorsForItem(donorsCache[item.id]);
+    return;
+  }
+
   setDonorsLoading(true);
   
   try {
@@ -199,8 +215,8 @@ const handleItemClick = async (item) => {
             id: meetup.id,
             name: donorName,
             quantity: `${meetup.quantity} lbs`,
-            scheduledDate: meetup.scheduled_date,
-            scheduledTime: meetup.scheduled_time,
+            scheduledDate: meetup.scheduled_date, // Store as-is from backend
+            scheduledTime: meetup.scheduled_time, // Store as-is from backend
             completed: meetup.completed,
             verified: true,
             timeChangeRequest: timeChangeRequest || null,
@@ -222,6 +238,11 @@ const handleItemClick = async (item) => {
     );
 
     setDonorsForItem(donorsWithDetails);
+    // Cache the donors for this posting
+    setDonorsCache(prev => ({
+      ...prev,
+      [item.id]: donorsWithDetails
+    }));
   } catch (err) {
     console.error('Error fetching donors for item:', err);
     setError('Failed to load donors for this item');
@@ -336,6 +357,18 @@ const handleItemClick = async (item) => {
           : d
       ));
 
+      // Update cache as well
+      if (selectedItem && donorsCache[selectedItem.id]) {
+        setDonorsCache(prev => ({
+          ...prev,
+          [selectedItem.id]: prev[selectedItem.id].map(d =>
+            d.id === selectedMeetup.id
+              ? { ...d, timeChangeRequest: data }
+              : d
+          )
+        }));
+      }
+
       // Show success message
       alert('Time change request sent to donor for approval!');
 
@@ -440,6 +473,9 @@ const handleItemClick = async (item) => {
       };
       setFoodItems([newItem, ...foodItems]);
 
+      // Clear the cache to refresh data on next view
+      setLastFetchTime(null);
+
       handleClosePostModal();
 
     } catch (error) {
@@ -464,12 +500,12 @@ const handleItemClick = async (item) => {
     }
   }, [showPostModal]);
 
-  if (loading) {
+  if (loading && foodItems.length === 0) {
     return (
       <div id="dashboard">
         <div className="dashboard-grid">
-          <div className="main-content">
-            <p>Loading donation postings...</p>
+          <div className="main-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+            <div className="spinner"></div>
           </div>
         </div>
       </div>
@@ -579,81 +615,83 @@ const handleItemClick = async (item) => {
               </div>
 
               {donorsLoading ? (
-                <p>Loading donors...</p>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                  <div className="spinner"></div>
+                </div>
               ) : (
                 <div className="items-list">
-                  {donorsForItem.length > 0 ? (
-                    donorsForItem.map(donor => (
-                      <div key={donor.id} className="item-card">
-                        <div className="item-info">
-                          <h3>
-                            {donor.name} 
-                            {donor.verified && !donor.timeChangeRequest && <span className="verified">✓</span>}
-                            {donor.timeChangeRequest && donor.timeChangeRequest.status === 'approved' && (
-                              <span className="verified">✓</span>
-                            )}
-                            {donor.timeChangeRequest && donor.timeChangeRequest.status === 'rejected' && (
-                              <span style={{
-                                background: '#d32f2f',
-                                color: 'white',
-                                padding: '4px 12px',
-                                borderRadius: '12px',
-                                fontSize: '0.75em',
-                                fontWeight: '600',
-                                marginLeft: '12px',
-                                textTransform: 'uppercase'
-                              }}>
-                                ✗ REJECTED
-                              </span>
-                            )}
-                            {donor.timeChangeRequest && donor.timeChangeRequest.status === 'pending' && (
-                              <span style={{
-                                background: '#ff9800',
-                                color: 'white',
-                                padding: '4px 12px',
-                                borderRadius: '12px',
-                                fontSize: '0.75em',
-                                fontWeight: '600',
-                                marginLeft: '12px',
-                                textTransform: 'uppercase'
-                              }}>
-                                ⏱ PENDING
-                              </span>
-                            )}
-                          </h3>
-                          <p className="quantity">Donating: {donor.quantity}</p>
-                          <p className="distance">
-                            Scheduled: {donor.scheduledDate} at {donor.scheduledTime}
-                          </p>
-                          {donor.completed && (
-                            <span className="completed-badge" style={{ 
-                              backgroundColor: '#4caf50', 
-                              color: 'white', 
-                              padding: '2px 8px', 
-                              borderRadius: '4px',
-                              fontSize: '0.85em'
+                {donorsForItem.length > 0 ? (
+                  donorsForItem.map(donor => (
+                    <div key={donor.id} className="item-card">
+                      <div className="item-info">
+                        <h3>
+                          {donor.name} 
+                          {donor.verified && !donor.timeChangeRequest && <span className="verified">✓</span>}
+                          {donor.timeChangeRequest && donor.timeChangeRequest.status === 'approved' && (
+                            <span className="verified">✓</span>
+                          )}
+                          {donor.timeChangeRequest && donor.timeChangeRequest.status === 'rejected' && (
+                            <span style={{
+                              background: '#d32f2f',
+                              color: 'white',
+                              padding: '4px 12px',
+                              borderRadius: '12px',
+                              fontSize: '0.75em',
+                              fontWeight: '600',
+                              marginLeft: '12px',
+                              textTransform: 'uppercase'
                             }}>
-                              Completed
+                              ✗ REJECTED
                             </span>
                           )}
-                        </div>
-                        <button 
-                          className="contact-btn" 
-                          onClick={() => handleOpenTimeChangeModal(donor)}
-                          disabled={donor.timeChangeRequest && donor.timeChangeRequest.status === 'pending'}
-                          style={{
-                            opacity: donor.timeChangeRequest && donor.timeChangeRequest.status === 'pending' ? 0.6 : 1,
-                            cursor: donor.timeChangeRequest && donor.timeChangeRequest.status === 'pending' ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          Request Time Change
-                        </button>
+                          {donor.timeChangeRequest && donor.timeChangeRequest.status === 'pending' && (
+                            <span style={{
+                              background: '#ff9800',
+                              color: 'white',
+                              padding: '4px 12px',
+                              borderRadius: '12px',
+                              fontSize: '0.75em',
+                              fontWeight: '600',
+                              marginLeft: '12px',
+                              textTransform: 'uppercase'
+                            }}>
+                              ⏱ PENDING
+                            </span>
+                          )}
+                        </h3>
+                        <p className="quantity">Donating: {donor.quantity}</p>
+                        <p className="distance">
+                          Scheduled: {donor.scheduledDate} at {donor.scheduledTime}
+                        </p>
+                        {donor.completed && (
+                          <span className="completed-badge" style={{ 
+                            backgroundColor: '#4caf50', 
+                            color: 'white', 
+                            padding: '2px 8px', 
+                            borderRadius: '4px',
+                            fontSize: '0.85em'
+                          }}>
+                            Completed
+                          </span>
+                        )}
                       </div>
-                    ))
-                  ) : (
-                    <p className="no-donors">No donors scheduled for this item yet.</p>
-                  )}
-                </div>
+                      <button 
+                        className="contact-btn" 
+                        onClick={() => handleOpenTimeChangeModal(donor)}
+                        disabled={donor.timeChangeRequest && donor.timeChangeRequest.status === 'pending'}
+                        style={{
+                          opacity: donor.timeChangeRequest && donor.timeChangeRequest.status === 'pending' ? 0.6 : 1,
+                          cursor: donor.timeChangeRequest && donor.timeChangeRequest.status === 'pending' ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        Request Time Change
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="no-donors">No donors scheduled for this item yet.</p>
+                )}
+              </div>
               )}
             </>
           )}

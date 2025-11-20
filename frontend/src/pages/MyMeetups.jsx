@@ -216,169 +216,169 @@ function MyMeetups() {
   const pendingMeetups = meetups.filter(m => !m.completed);
   const completedMeetups = meetups.filter(m => m.completed);
 
-  const renderMeetupCard = (meetup, isPending = true) => {
-    const isCompletedButtonLoading = actionLoading.meetupId === meetup.id && actionLoading.action === 'completed';
-    const isNotCompletedButtonLoading = actionLoading.meetupId === meetup.id && actionLoading.action === 'not-completed';
+const renderMeetupCard = (meetup, isPending = true) => {
+  const isCompletedButtonLoading = actionLoading.meetupId === meetup.id && actionLoading.action === 'completed';
+  const isNotCompletedButtonLoading = actionLoading.meetupId === meetup.id && actionLoading.action === 'not-completed';
 
-    return (
-      <div key={meetup.id} className="item-card">
-        <div className="item-info">
-          <h3>
-            {meetup.donorName}
-            {!meetup.timeChangeRequest && !meetup.completed && <span className="verified">✓</span>}
-            {meetup.timeChangeRequest && meetup.timeChangeRequest.status === 'pending' && (
-              <span style={{
-                background: '#ff9800',
-                color: 'white',
-                padding: '4px 12px',
-                borderRadius: '12px',
-                fontSize: '0.75em',
-                fontWeight: '600',
-                marginLeft: '12px',
-                textTransform: 'uppercase'
-              }}>
-                ⏱ PENDING DONOR RESPONSE
-              </span>
-            )}
-            {meetup.timeChangeRequest && meetup.timeChangeRequest.status === 'approved' && (
-              <span className="verified">✓</span>
-            )}
-            {meetup.timeChangeRequest && meetup.timeChangeRequest.status === 'rejected' && (
-              <span style={{
-                background: '#d32f2f',
-                color: 'white',
-                padding: '4px 12px',
-                borderRadius: '12px',
-                fontSize: '0.75em',
-                fontWeight: '600',
-                marginLeft: '12px',
-                textTransform: 'uppercase'
-              }}>
-                ✗ REJECTED
-              </span>
-            )}
-          </h3>
-          <p className="quantity">Item: {meetup.foodItem}</p>
-          <p className="quantity">Amount: {meetup.quantity}</p>
-          <div className="details">
-            <span>
-              Scheduled: {new Date(meetup.scheduledDate).toLocaleDateString()} at {meetup.scheduledTime}
-            </span>
-            {meetup.timeChangeRequest && meetup.timeChangeRequest.status === 'pending' && (
-              <span style={{ color: '#ff9800', fontWeight: '600' }}>
-                Requested time: {new Date(meetup.timeChangeRequest.new_date).toLocaleDateString()} at {meetup.timeChangeRequest.new_time}
-              </span>
-            )}
-            {meetup.timeChangeRequest && meetup.timeChangeRequest.status === 'approved' && (
-              <span style={{ color: '#4a7c59', fontWeight: '600' }}>
-                Time change approved
-              </span>
-            )}
-            {meetup.timeChangeRequest && meetup.timeChangeRequest.status === 'rejected' && (
-              <span style={{ color: '#d32f2f', fontWeight: '600' }}>
-                Time change rejected by donor
-              </span>
-            )}
-          </div>
-          
-          {/* Status badges based on completion_status from database */}
-          {meetup.completed && meetup.completionType === 'completed' && (
+  return (
+    <div key={meetup.id} className="item-card">
+      <div className="item-info">
+        <h3>
+          {meetup.donorName}
+          {!meetup.timeChangeRequest && !meetup.completed && <span className="verified">✓</span>}
+          {meetup.timeChangeRequest && meetup.timeChangeRequest.status === 'pending' && (
             <span style={{
-              backgroundColor: '#4caf50',
+              background: '#ff9800',
               color: 'white',
               padding: '4px 12px',
               borderRadius: '12px',
-              fontSize: '0.85em',
+              fontSize: '0.75em',
               fontWeight: '600',
-              marginTop: '8px',
-              display: 'inline-block'
+              marginLeft: '12px',
+              textTransform: 'uppercase'
             }}>
-              ✓ COMPLETED
+              ⏱ PENDING DONOR RESPONSE
             </span>
           )}
-          
-          {meetup.completed && meetup.completionType === 'not_completed' && (
+          {meetup.timeChangeRequest && meetup.timeChangeRequest.status === 'approved' && (
+            <span className="verified">✓</span>
+          )}
+          {meetup.timeChangeRequest && meetup.timeChangeRequest.status === 'rejected' && (
             <span style={{
-              backgroundColor: '#f44336',
+              background: '#d32f2f',
               color: 'white',
               padding: '4px 12px',
               borderRadius: '12px',
-              fontSize: '0.85em',
+              fontSize: '0.75em',
               fontWeight: '600',
-              marginTop: '8px',
-              display: 'inline-block'
+              marginLeft: '12px',
+              textTransform: 'uppercase'
             }}>
-              ✗ NOT COMPLETED
+              ✗ REJECTED
+            </span>
+          )}
+        </h3>
+        <p className="quantity">Item: {meetup.foodItem}</p>
+        <p className="quantity">Amount: {meetup.quantity}</p>
+        <div className="details">
+          <span>
+            Scheduled: {meetup.scheduledDate} at {meetup.scheduledTime.substring(0, 5)}
+          </span>
+          {meetup.timeChangeRequest && meetup.timeChangeRequest.status === 'pending' && (
+            <span style={{ color: '#ff9800', fontWeight: '600' }}>
+              Requested time: {meetup.timeChangeRequest.new_date} at {meetup.timeChangeRequest.new_time}
+            </span>
+          )}
+          {meetup.timeChangeRequest && meetup.timeChangeRequest.status === 'approved' && (
+            <span style={{ color: '#4a7c59', fontWeight: '600' }}>
+              Time change approved
+            </span>
+          )}
+          {meetup.timeChangeRequest && meetup.timeChangeRequest.status === 'rejected' && (
+            <span style={{ color: '#d32f2f', fontWeight: '600' }}>
+              Time change rejected by donor
             </span>
           )}
         </div>
         
-        {/* Action buttons - only show for pending meetups */}
-        {isPending && (
-          <div style={{ 
-            display: 'flex', 
-            gap: '10px', 
-            marginTop: '10px',
-            justifyContent: 'flex-end'
+        {/* Status badges based on completion_status from database */}
+        {meetup.completed && meetup.completionType === 'completed' && (
+          <span style={{
+            backgroundColor: '#4caf50',
+            color: 'white',
+            padding: '4px 12px',
+            borderRadius: '12px',
+            fontSize: '0.85em',
+            fontWeight: '600',
+            marginTop: '8px',
+            display: 'inline-block'
           }}>
-            <button 
-              onClick={() => handleMarkCompleted(meetup.id, true)}
-              disabled={isCompletedButtonLoading || isNotCompletedButtonLoading}
-              style={{
-                backgroundColor: '#4caf50',
-                color: 'white',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: '4px',
-                cursor: (isCompletedButtonLoading || isNotCompletedButtonLoading) ? 'not-allowed' : 'pointer',
-                fontWeight: '600',
-                fontSize: '14px',
-                opacity: (isCompletedButtonLoading || isNotCompletedButtonLoading) ? 0.6 : 1,
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                if (!isCompletedButtonLoading && !isNotCompletedButtonLoading) {
-                  e.target.style.backgroundColor = '#45a049';
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#4caf50';
-              }}
-            >
-              {isCompletedButtonLoading ? 'Processing...' : '✓ Completed'}
-            </button>
-            
-            <button 
-              onClick={() => handleMarkCompleted(meetup.id, false)}
-              disabled={isCompletedButtonLoading || isNotCompletedButtonLoading}
-              style={{
-                backgroundColor: '#f44336',
-                color: 'white',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: '4px',
-                cursor: (isCompletedButtonLoading || isNotCompletedButtonLoading) ? 'not-allowed' : 'pointer',
-                fontWeight: '600',
-                fontSize: '14px',
-                opacity: (isCompletedButtonLoading || isNotCompletedButtonLoading) ? 0.6 : 1,
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                if (!isCompletedButtonLoading && !isNotCompletedButtonLoading) {
-                  e.target.style.backgroundColor = '#da190b';
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#f44336';
-              }}
-            >
-              {isNotCompletedButtonLoading ? 'Processing...' : '✗ Not Completed'}
-            </button>
-          </div>
+            ✓ COMPLETED
+          </span>
+        )}
+        
+        {meetup.completed && meetup.completionType === 'not_completed' && (
+          <span style={{
+            backgroundColor: '#f44336',
+            color: 'white',
+            padding: '4px 12px',
+            borderRadius: '12px',
+            fontSize: '0.85em',
+            fontWeight: '600',
+            marginTop: '8px',
+            display: 'inline-block'
+          }}>
+            ✗ NOT COMPLETED
+          </span>
         )}
       </div>
-    );
-  };
+      
+      {/* Action buttons - only show for pending meetups */}
+      {isPending && (
+        <div style={{ 
+          display: 'flex', 
+          gap: '10px', 
+          marginTop: '10px',
+          justifyContent: 'flex-end'
+        }}>
+          <button 
+            onClick={() => handleMarkCompleted(meetup.id, true)}
+            disabled={isCompletedButtonLoading || isNotCompletedButtonLoading}
+            style={{
+              backgroundColor: '#4caf50',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '4px',
+              cursor: (isCompletedButtonLoading || isNotCompletedButtonLoading) ? 'not-allowed' : 'pointer',
+              fontWeight: '600',
+              fontSize: '14px',
+              opacity: (isCompletedButtonLoading || isNotCompletedButtonLoading) ? 0.6 : 1,
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              if (!isCompletedButtonLoading && !isNotCompletedButtonLoading) {
+                e.target.style.backgroundColor = '#45a049';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#4caf50';
+            }}
+          >
+            {isCompletedButtonLoading ? 'Processing...' : '✓ Completed'}
+          </button>
+          
+          <button 
+            onClick={() => handleMarkCompleted(meetup.id, false)}
+            disabled={isCompletedButtonLoading || isNotCompletedButtonLoading}
+            style={{
+              backgroundColor: '#f44336',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '4px',
+              cursor: (isCompletedButtonLoading || isNotCompletedButtonLoading) ? 'not-allowed' : 'pointer',
+              fontWeight: '600',
+              fontSize: '14px',
+              opacity: (isCompletedButtonLoading || isNotCompletedButtonLoading) ? 0.6 : 1,
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              if (!isCompletedButtonLoading && !isNotCompletedButtonLoading) {
+                e.target.style.backgroundColor = '#da190b';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#f44336';
+            }}
+          >
+            {isNotCompletedButtonLoading ? 'Processing...' : '✗ Not Completed'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
 
   return (
     <div id="dashboard">

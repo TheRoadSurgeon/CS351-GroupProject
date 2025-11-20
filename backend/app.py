@@ -36,19 +36,12 @@ meetup_bloom_lock = Lock()
 def _index_posting_in_trie(posting):
     """
     Index one DonationPosting into the Trie.
-    We use title, description, tags, and banned_items so that
-    search can match on any of those words.
+    We use food_name so that search can match on it.
     """
     text_pieces = []
 
-    if posting.title:
-        text_pieces.append(posting.title)
-    if posting.description:
-        text_pieces.append(posting.description)
-    if posting.tags:
-        text_pieces.extend(posting.tags)
-    if posting.banned_items:
-        text_pieces.extend(posting.banned_items)
+    if posting.food_name:
+        text_pieces.append(posting.food_name)
 
     combined = " ".join(text_pieces)
     if not combined:
@@ -224,15 +217,17 @@ def create_profile():
 def list_food_banks():
     """
     List all food banks with their item counts.
+    Only counts active (non-deleted) postings.
     """
     banks = FoodBank.query.order_by(FoodBank.name).all()
     
-    # Get posting counts for each food bank
+    # Get posting counts for each food bank (only active postings)
     bank_data = []
     for bank in banks:
-        # Count all donation postings for this food bank
+        # Count only active (non-deleted) donation postings for this food bank
         posting_count = DonationPosting.query.filter(
-            DonationPosting.food_bank_id == bank.id
+            DonationPosting.food_bank_id == bank.id,
+            DonationPosting.is_active == True  # Only count active postings
         ).count()
         
         bank_json = bank.to_json()
@@ -240,6 +235,7 @@ def list_food_banks():
         bank_data.append(bank_json)
     
     return jsonify({"food_banks": bank_data})
+
 
 # --- Donation postings API ---
 
@@ -358,7 +354,7 @@ def create_donation_posting():
     db.session.add(posting)
     db.session.commit()
 
-    # _index_posting_in_trie(posting)
+    _index_posting_in_trie(posting)
 
     return jsonify(posting.to_json()), 201
 
@@ -368,8 +364,8 @@ def create_donation_posting():
 @app.get("/api/items/autocomplete")
 def autocomplete_items():
     """
-    Return word suggestions for a given prefix based on all
-    words we've seen in donation postings (title, description, tags, banned_items).
+    Return word suggestions for a given prefix based on food_name
+    from donation postings.
     Example: /api/items/autocomplete?q=can
     """
     prefix = (request.args.get("q") or "").strip()
@@ -388,7 +384,7 @@ def autocomplete_items():
 def search_postings():
     """
     Search donation postings by text prefix using the Trie.
-    Looks at words from title, description, tags, and banned_items.
+    Looks at words from food_name.
     Example: /api/search/postings?q=rice
     """
     prefix = (request.args.get("q") or "").strip()
@@ -905,23 +901,11 @@ def leaderboard():
 
 
 if __name__ == "__main__":
-
-    # Run the Trie on start up and fill the datastructure
-    # with app.app_context():
-    #     try:
-    #         _build_trie_from_db()
-    #     except Exception as e:
-    #         print("WARNING: Could not build Trie from DB at startup:", repr(e))
-    #         import traceback
-    #         traceback.print_exc()
-
-    # Run the Bloom Filter on start up and fill the datastructure
     with app.app_context():
         try:
-            _build_meetup_bloom_from_db()
+            _build_trie_from_db()
         except Exception as e:
-            print("WARNING: Could not build Meetup Bloom filter at startup:", repr(e))
+            print("WARNING: Could not build Trie from DB at startup:", repr(e))
             import traceback
             traceback.print_exc()
-
     app.run(debug=True, port=5000)
