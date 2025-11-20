@@ -24,11 +24,20 @@ function DashboardDonor() {
     amount: '',
     donationTime: ''
   });
+  const [lastFetchTime, setLastFetchTime] = useState(null);
+  const [foodBankItemsCache, setFoodBankItemsCache] = useState({});
+  const [sortBy, setSortBy] = useState('name');
   const { user } = useAuth();
  
   
   useEffect(() => {
     const fetchFoodBanks = async () => {
+      const now = Date.now();
+      if (lastFetchTime && now - lastFetchTime < 30000) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
@@ -49,6 +58,7 @@ function DashboardDonor() {
         }));
 
         setNearbyFoodBanks(transformedData);
+        setLastFetchTime(Date.now());
       } catch (error) {
         console.error('Error fetching food banks:', error);
         setError('Failed to load food banks. Please try again.');
@@ -58,7 +68,7 @@ function DashboardDonor() {
     };
 
     fetchFoodBanks();
-  }, []);
+  }, [lastFetchTime]);
 
   useEffect(() => {
     if (searchTerm.trim().length < 2) {
@@ -83,6 +93,12 @@ function DashboardDonor() {
 
   const handleFoodBankClick = async (foodBank) => {
     setSelectedFoodBank(foodBank);
+    
+    if (foodBankItemsCache[foodBank.id]) {
+      setFoodItemsNeeded(foodBankItemsCache[foodBank.id]);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     
@@ -109,6 +125,11 @@ function DashboardDonor() {
       }));
       
       setFoodItemsNeeded(transformedItems);
+      // Cache the items for this food bank
+      setFoodBankItemsCache(prev => ({
+        ...prev,
+        [foodBank.id]: transformedItems
+      }));
     } catch (err) {
       console.error('Error fetching food items:', err);
       setError('Failed to load food items for this food bank. Please try again.');
@@ -168,8 +189,8 @@ const handleConfirm = async (e) => {
 
   // Validate meeting time is within available time range
   const meetingTimeValue = meetingTime; // Format: "HH:MM"
-  const fromTimeValue = selectedItem.fromTime.substring(0, 5); // Convert "HH:MM:SS" to "HH:MM"
-  const toTimeValue = selectedItem.toTime.substring(0, 5); // Convert "HH:MM:SS" to "HH:MM"
+  const fromTimeValue = selectedItem.fromTime.substring(0, 5);
+  const toTimeValue = selectedItem.toTime.substring(0, 5);
 
   if (meetingTimeValue < fromTimeValue || meetingTimeValue > toTimeValue) {
     setSubmitError(`Meeting time must be between ${fromTimeValue} and ${toTimeValue}`);
@@ -206,10 +227,6 @@ const handleConfirm = async (e) => {
       throw new Error(errorData.error || 'Failed to schedule donation');
     }
 
-    const data = await response.json();
-    console.log('Donation scheduled successfully:', data);
-
-    // Update the local food items list to reflect the decreased quantity
     setFoodItemsNeeded(prevItems =>
       prevItems.map(item => {
         if (item.id === selectedItem.id) {
@@ -224,15 +241,21 @@ const handleConfirm = async (e) => {
       })
     );
 
-    alert('Donation scheduled successfully! The food bank will be notified.');
-    handleCloseModal();
-  } catch (error) {
-    console.error('Error scheduling donation:', error);
-    setSubmitError(error.message);
-  } finally {
-    setSubmitLoading(false);
-  }
-};
+      setFoodBankItemsCache(prev => {
+        const newCache = { ...prev };
+        delete newCache[selectedFoodBank.id];
+        return newCache;
+      });
+
+      alert('Donation scheduled successfully! The food bank will be notified.');
+      handleCloseModal();
+    } catch (error) {
+      console.error('Error scheduling donation:', error);
+      setSubmitError(error.message);
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -257,25 +280,35 @@ const handleConfirm = async (e) => {
     }
   };
 
+  const sortedFoodBanks = [...nearbyFoodBanks].sort((a, b) => {
+    if (sortBy === 'items') {
+      return b.itemCount - a.itemCount;
+    }
+    return a.name.localeCompare(b.name);
+  });
+
   return (
     <div id="dashboard">
       <div className="dashboard-grid">
         <div className="main-content">
-          {!selectedFoodBank ? (
+          {loading && !selectedFoodBank ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+              <div className="spinner"></div>
+            </div>
+          ) : !selectedFoodBank ? (
             <>
               <div className="content-header">
                 <h2>Nearby Food Banks</h2>
                 <div className="filters">
-                  <select>
-                    <option>Within 5 miles</option>
-                    <option>Within 2 miles</option>
-                    <option>Within 1 mile</option>
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                    <option value="name">Sort by Name</option>
+                    <option value="items">Sort by Items Needed</option>
                   </select>
                 </div>
               </div>
 
               <div className="items-list">
-                {nearbyFoodBanks.map((bank) => (
+                {sortedFoodBanks.map((bank) => (
                   <div 
                     key={bank.id} 
                     className="item-card clickable"
@@ -327,45 +360,51 @@ const handleConfirm = async (e) => {
                 </div>
               </div>
 
-              <div className="items-list">
-                {foodItemsNeeded.length > 0 ? (
-                  foodItemsNeeded
-                    .filter(item => {
-                      if (!searchTerm.trim()) return true;
-                      const searchLower = searchTerm.toLowerCase();
-                      return item.name.toLowerCase().includes(searchLower);
-                    })
-                    .map(item => (
-                      <div key={item.id} className="item-card">
-                        <div className="item-info">
-                          <h3>
-                            {item.name}
-                            <span className={`urgency-badge ${item.urgency.toLowerCase()}`}>
-                              {item.urgency}
-                            </span>
-                          </h3>
-                          <p className="quantity">Need: {item.quantityNeeded}</p>
+              {loading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                  <div className="spinner"></div>
+                </div>
+              ) : (
+                <div className="items-list">
+                  {foodItemsNeeded.length > 0 ? (
+                    foodItemsNeeded
+                      .filter(item => {
+                        if (!searchTerm.trim()) return true;
+                        const searchLower = searchTerm.toLowerCase();
+                        return item.name.toLowerCase().includes(searchLower);
+                      })
+                      .map(item => (
+                        <div key={item.id} className="item-card">
+                          <div className="item-info">
+                            <h3>
+                              {item.name}
+                              <span className={`urgency-badge ${item.urgency.toLowerCase()}`}>
+                                {item.urgency}
+                              </span>
+                            </h3>
+                            <p className="quantity">Need: {item.quantityNeeded}</p>
+                          </div>
+                          <button 
+                            className="donate-btn"
+                            onClick={() => handleDonateClick(item)}
+                          >
+                            Donate This Item
+                          </button>
                         </div>
-                        <button 
-                          className="donate-btn"
-                          onClick={() => handleDonateClick(item)}
-                        >
-                          Donate This Item
-                        </button>
-                      </div>
-                    ))
-                ) : (
-                  <p className="no-items">No items needed at this time.</p>
-                )}
-                {foodItemsNeeded.length > 0 && 
-                 foodItemsNeeded.filter(item => {
-                   if (!searchTerm.trim()) return true;
-                   const searchLower = searchTerm.toLowerCase();
-                   return item.name.toLowerCase().includes(searchLower);
-                 }).length === 0 && (
-                  <p className="no-items">No items match your search.</p>
-                )}
-              </div>
+                      ))
+                  ) : (
+                    <p className="no-items">No items needed at this time.</p>
+                  )}
+                  {foodItemsNeeded.length > 0 && 
+                   foodItemsNeeded.filter(item => {
+                     if (!searchTerm.trim()) return true;
+                     const searchLower = searchTerm.toLowerCase();
+                     return item.name.toLowerCase().includes(searchLower);
+                   }).length === 0 && (
+                    <p className="no-items">No items match your search.</p>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>

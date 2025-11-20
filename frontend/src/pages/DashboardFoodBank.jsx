@@ -31,6 +31,8 @@ function DashboardFoodBank() {
   });
   const [timeChangeLoading, setTimeChangeLoading] = useState(false);
   const [timeChangeError, setTimeChangeError] = useState(null);
+  const [lastFetchTime, setLastFetchTime] = useState(null);
+  const [donorsCache, setDonorsCache] = useState({});
   const { user } = useAuth();
 
   const FOOD_BANK_ID = user?.id;
@@ -40,6 +42,12 @@ useEffect(() => {
   const fetchDonationPostings = async () => {
     if (!FOOD_BANK_ID) {
       setError('User not logged in');
+      setLoading(false);
+      return;
+    }
+
+    const now = Date.now();
+    if (lastFetchTime && now - lastFetchTime < 30000) {
       setLoading(false);
       return;
     }
@@ -99,6 +107,7 @@ useEffect(() => {
       );
 
       setFoodItems(postingsWithDonorCounts);
+      setLastFetchTime(Date.now());
       setError(null);
     } catch (err) {
       console.error('Error fetching donation postings:', err);
@@ -111,7 +120,7 @@ useEffect(() => {
   if (user) {
     fetchDonationPostings();
   }
-}, [FOOD_BANK_ID, user]);
+}, [FOOD_BANK_ID, user, lastFetchTime]);
 
 const handleDeletePosting = async (itemId) => {
   if (!window.confirm('Are you sure you want to delete this donation posting? Scheduled meetups will remain visible in your Donations tab.')) {
@@ -140,6 +149,13 @@ const handleDeletePosting = async (itemId) => {
 
 const handleItemClick = async (item) => {
   setSelectedItem(item);
+  
+  // Check if we have cached data for this posting
+  if (donorsCache[item.id]) {
+    setDonorsForItem(donorsCache[item.id]);
+    return;
+  }
+
   setDonorsLoading(true);
   
   try {
@@ -222,6 +238,11 @@ const handleItemClick = async (item) => {
     );
 
     setDonorsForItem(donorsWithDetails);
+    // Cache the donors for this posting
+    setDonorsCache(prev => ({
+      ...prev,
+      [item.id]: donorsWithDetails
+    }));
   } catch (err) {
     console.error('Error fetching donors for item:', err);
     setError('Failed to load donors for this item');
@@ -336,6 +357,18 @@ const handleItemClick = async (item) => {
           : d
       ));
 
+      // Update cache as well
+      if (selectedItem && donorsCache[selectedItem.id]) {
+        setDonorsCache(prev => ({
+          ...prev,
+          [selectedItem.id]: prev[selectedItem.id].map(d =>
+            d.id === selectedMeetup.id
+              ? { ...d, timeChangeRequest: data }
+              : d
+          )
+        }));
+      }
+
       // Show success message
       alert('Time change request sent to donor for approval!');
 
@@ -440,6 +473,9 @@ const handleItemClick = async (item) => {
       };
       setFoodItems([newItem, ...foodItems]);
 
+      // Clear the cache to refresh data on next view
+      setLastFetchTime(null);
+
       handleClosePostModal();
 
     } catch (error) {
@@ -464,12 +500,12 @@ const handleItemClick = async (item) => {
     }
   }, [showPostModal]);
 
-  if (loading) {
+  if (loading && foodItems.length === 0) {
     return (
       <div id="dashboard">
         <div className="dashboard-grid">
-          <div className="main-content">
-            <p>Loading donation postings...</p>
+          <div className="main-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+            <div className="spinner"></div>
           </div>
         </div>
       </div>
@@ -579,7 +615,9 @@ const handleItemClick = async (item) => {
               </div>
 
               {donorsLoading ? (
-                <p>Loading donors...</p>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                  <div className="spinner"></div>
+                </div>
               ) : (
                 <div className="items-list">
                 {donorsForItem.length > 0 ? (
