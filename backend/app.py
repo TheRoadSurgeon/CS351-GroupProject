@@ -229,21 +229,68 @@ def list_donation_postings():
     return jsonify({"postings": [p.to_json() for p in postings]})
 
 
+# @app.get("/api/donation_postings")
+# def get_donation_postings():
+#     food_bank_id = request.args.get("food_bank_id")
+
+#     if food_bank_id:
+#         try:
+#             fb_uuid = UUID(food_bank_id)
+#         except (ValueError, TypeError):
+#             return jsonify({"error": "Invalid food_bank_id format"}), 400
+
+#         # Only return active postings
+#         postings = DonationPosting.query.filter_by(
+#             food_bank_id=fb_uuid,
+#             is_active=True  # Add this filter
+#         ).all()
+        
+#         return jsonify({"postings": [p.to_json() for p in postings]}), 200
+
+#     # Only return active postings
+#     postings = DonationPosting.query.filter_by(is_active=True).all()
+#     return jsonify({"postings": [p.to_json() for p in postings]}), 200
+
+
 @app.get("/api/donation_postings/<posting_id>")
-def get_donation_posting(posting_id):
+def get_single_donation_posting(posting_id):
     """
-    Get a specific donation posting's details.
+    Get a single donation posting by ID.
+    This returns the posting even if it's been soft-deleted (is_active=False)
+    so that historical meetups can still display the food item name.
     """
     try:
         posting_uuid = UUID(posting_id)
     except (ValueError, TypeError):
         return jsonify({"error": "Invalid posting_id format"}), 400
-    
+
     posting = DonationPosting.query.filter_by(id=posting_uuid).first()
     if not posting:
-        return jsonify({"error": "Donation posting not found"}), 404
+        return jsonify({"error": "Posting not found"}), 404
+
+    return jsonify(posting.to_json()), 200
+
+
+@app.delete("/api/donation_postings/<posting_id>")
+def soft_delete_posting(posting_id):
+    """
+    Soft delete a donation posting (marks as inactive).
+    """
+    try:
+        posting_uuid = UUID(posting_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid posting_id format"}), 400
+
+    posting = DonationPosting.query.filter_by(id=posting_uuid).first()
+    if not posting:
+        return jsonify({"error": "Posting not found"}), 404
+
+    posting.is_active = False
+    posting.updated_at = datetime.utcnow()
     
-    return jsonify(posting.to_json())
+    db.session.commit()
+    
+    return jsonify({"message": "Posting deleted successfully"}), 200
 
 
 @app.post("/api/donation_postings")

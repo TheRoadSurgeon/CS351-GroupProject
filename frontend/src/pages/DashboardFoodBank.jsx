@@ -113,6 +113,30 @@ useEffect(() => {
   }
 }, [FOOD_BANK_ID, user]);
 
+const handleDeletePosting = async (itemId) => {
+  if (!window.confirm('Are you sure you want to delete this donation posting? Scheduled meetups will remain visible in your Donations tab.')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`http://127.0.0.1:5000/api/donation_postings/${itemId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to delete posting');
+    }
+
+    setFoodItems(foodItems.filter(item => item.id !== itemId));
+    alert('Posting deleted successfully!');
+
+  } catch (error) {
+    console.error('Error deleting posting:', error);
+    alert(`Error: ${error.message}`);
+  }
+};
+
 
 const handleItemClick = async (item) => {
   setSelectedItem(item);
@@ -500,10 +524,9 @@ const handleItemClick = async (item) => {
                   foodItems.map(item => (
                     <div 
                       key={item.id} 
-                      className="item-card clickable"
-                      onClick={() => handleItemClick(item)}
+                      className="item-card"
                     >
-                      <div className="item-info">
+                      <div className="item-info" onClick={() => handleItemClick(item)} style={{ cursor: 'pointer', flex: 1 }}>
                         <h3>
                           {item.name}
                           <span className={`urgency-badge ${item.urgency.toLowerCase()}`}>
@@ -513,7 +536,34 @@ const handleItemClick = async (item) => {
                         <p className="quantity">Need: {item.quantityNeeded}</p>
                         <p className="donor-count">{item.donorCount} donor{item.donorCount !== 1 ? 's' : ''} scheduled</p>
                       </div>
-                      <button className="view-donors-btn">View Donors →</button>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <button 
+                          className="view-donors-btn"
+                          onClick={() => handleItemClick(item)}
+                        >
+                          View Donors →
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeletePosting(item.id);
+                          }}
+                          style={{
+                            backgroundColor: '#f44336',
+                            color: 'white',
+                            border: 'none',
+                            padding: '10px 15px',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            fontSize: '14px'
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = '#da190b'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = '#f44336'}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}

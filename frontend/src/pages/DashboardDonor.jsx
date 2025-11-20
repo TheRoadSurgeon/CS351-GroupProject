@@ -365,6 +365,9 @@ function DashboardDonor() {
                   max={selectedItem?.toDate}
                   required
                 />
+                <small style={{ color: '#666', fontSize: '0.85em', display: 'block', marginTop: '4px' }}>
+                  Dates: {selectedItem?.fromDate ? new Date(selectedItem.fromDate).toLocaleDateString() : ''} to {selectedItem?.toDate ? new Date(selectedItem.toDate).toLocaleDateString() : ''}
+                </small>
               </div>
 
               <div className="form-group">
@@ -378,10 +381,9 @@ function DashboardDonor() {
                   required
                 />
                 <small style={{ color: '#666', fontSize: '0.85em' }}>
-                  Available: {selectedItem?.fromTime} - {selectedItem?.toTime}
+                  Available Time: {selectedItem?.fromTime} - {selectedItem?.toTime}
                 </small>
               </div>
-
               <button type="submit" className="submit-btn" disabled={submitLoading}>
                 {submitLoading ? 'Scheduling...' : 'Confirm Donation'}
               </button>

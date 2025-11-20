@@ -165,7 +165,7 @@ class DonationPosting(db.Model):
 
     created_at = db.Column(db.DateTime(timezone=False), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=False), nullable=False)
-
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
     food_bank = db.relationship("FoodBank", backref="postings")
 
     def to_json(self):
