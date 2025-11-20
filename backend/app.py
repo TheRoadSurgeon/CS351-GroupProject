@@ -194,13 +194,13 @@ def list_food_banks():
     """
     banks = FoodBank.query.order_by(FoodBank.name).all()
     
-    # Get posting counts for each food bank
+    # Get posting counts for each food bank (only active postings)
     bank_data = []
     for bank in banks:
-        # Count only active donation postings for this food bank
+        # Count only active (non-deleted) donation postings for this food bank
         posting_count = DonationPosting.query.filter(
             DonationPosting.food_bank_id == bank.id,
-            DonationPosting.is_active != False
+            DonationPosting.is_active == True  # Only count active postings
         ).count()
         
         bank_json = bank.to_json()
@@ -208,6 +208,7 @@ def list_food_banks():
         bank_data.append(bank_json)
     
     return jsonify({"food_banks": bank_data})
+
 
 # --- Donation postings API ---
 
