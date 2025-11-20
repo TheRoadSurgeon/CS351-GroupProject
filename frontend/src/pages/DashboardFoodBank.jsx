@@ -36,175 +36,177 @@ function DashboardFoodBank() {
   const FOOD_BANK_ID = user?.id;
 
   // Fetch donation postings and their donor counts
-  useEffect(() => {
-    const fetchDonationPostings = async () => {
-      if (!FOOD_BANK_ID) {
-        setError('User not logged in');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const response = await fetch(
-          `http://127.0.0.1:5000/api/donation_postings?food_bank_id=${FOOD_BANK_ID}`
-        );
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch donation postings');
-        }
-
-        const data = await response.json();
-        
-        // For each posting, fetch the number of meetups (donors)
-        const postingsWithDonorCounts = await Promise.all(
-          data.postings.map(async (posting) => {
-            try {
-              const meetupsResponse = await fetch(
-                `http://127.0.0.1:5000/api/meetups?posting_id=${posting.id}`
-              );
-              
-              let donorCount = 0;
-              if (meetupsResponse.ok) {
-                const meetupsData = await meetupsResponse.json();
-                donorCount = meetupsData.meetups?.length || 0;
-              }
-
-              return {
-                id: posting.id,
-                name: posting.food_name,
-                urgency: posting.urgency,
-                quantityNeeded: `${posting.qty_needed} lbs`,
-                donorCount: donorCount,
-                fromDate: posting.from_date,
-                toDate: posting.to_date,
-                fromTime: posting.from_time,
-                toTime: posting.to_time,
-              };
-            } catch (err) {
-              console.error(`Error fetching meetups for posting ${posting.id}:`, err);
-              return {
-                id: posting.id,
-                name: posting.food_name,
-                urgency: posting.urgency,
-                quantityNeeded: `${posting.qty_needed} lbs`,
-                donorCount: 0,
-                fromDate: posting.from_date,
-                toDate: posting.to_date,
-                fromTime: posting.from_time,
-                toTime: posting.to_time,
-              };
-            }
-          })
-        );
-
-        setFoodItems(postingsWithDonorCounts);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching donation postings:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user) {
-      fetchDonationPostings();
+useEffect(() => {
+  const fetchDonationPostings = async () => {
+    if (!FOOD_BANK_ID) {
+      setError('User not logged in');
+      setLoading(false);
+      return;
     }
-  }, [FOOD_BANK_ID, user]);
 
-  const handleItemClick = async (item) => {
-    setSelectedItem(item);
-    setDonorsLoading(true);
-    
     try {
-      // Fetch meetups for this posting
-      const meetupsResponse = await fetch(
-        `http://127.0.0.1:5000/api/meetups?posting_id=${item.id}`
+      setLoading(true);
+      const response = await fetch(
+        `http://127.0.0.1:5000/api/donation_postings?food_bank_id=${FOOD_BANK_ID}`
       );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch donation postings');
+      }
+
+      const data = await response.json();
       
-      if (!meetupsResponse.ok) {
-        throw new Error('Failed to fetch meetups');
-      }
-
-      const meetupsData = await meetupsResponse.json();
-      const meetups = meetupsData.meetups || [];
-
-      // Fetch time change requests for these meetups
-      const timeChangeResponse = await fetch(
-        'http://127.0.0.1:5000/api/meetup_time_change_requests'
-      );
-
-      let timeChangeRequests = [];
-      if (timeChangeResponse.ok) {
-        const timeChangeData = await timeChangeResponse.json();
-        timeChangeRequests = timeChangeData.requests || [];
-        console.log('Fetched time change requests:', timeChangeRequests);
-      }
-
-      // Create a map of meetup_id -> time change request
-      const timeChangeByMeetupId = {};
-      timeChangeRequests.forEach(req => {
-        // Only store the most recent request for each meetup
-        if (!timeChangeByMeetupId[req.meetup_id] || 
-            new Date(req.created_at) > new Date(timeChangeByMeetupId[req.meetup_id].created_at)) {
-          timeChangeByMeetupId[req.meetup_id] = req;
-        }
-      });
-
-      // Fetch donor details for each meetup
-      const donorsWithDetails = await Promise.all(
-        meetups.map(async (meetup) => {
+      // For each posting, fetch the number of NON-COMPLETED meetups (donors)
+      const postingsWithDonorCounts = await Promise.all(
+        data.postings.map(async (posting) => {
           try {
-            // Fetch donor profile
-            const donorResponse = await fetch(
-              `http://127.0.0.1:5000/api/donors/${meetup.donor_id}`
+            const meetupsResponse = await fetch(
+              `http://127.0.0.1:5000/api/meetups?posting_id=${posting.id}&completed=false`
             );
-
-            let donorName = 'Unknown Donor';
-            if (donorResponse.ok) {
-              const donorData = await donorResponse.json();
-              donorName = `${donorData.first_name} ${donorData.last_name}`;
+            
+            let donorCount = 0;
+            if (meetupsResponse.ok) {
+              const meetupsData = await meetupsResponse.json();
+              donorCount = meetupsData.meetups?.length || 0;
             }
-
-            // Check for time change request status
-            const timeChangeRequest = timeChangeByMeetupId[meetup.id];
 
             return {
-              id: meetup.id,
-              name: donorName,
-              quantity: `${meetup.quantity} lbs`,
-              scheduledDate: meetup.scheduled_date,
-              scheduledTime: meetup.scheduled_time,
-              completed: meetup.completed,
-              verified: true,
-              timeChangeRequest: timeChangeRequest || null,
+              id: posting.id,
+              name: posting.food_name,
+              urgency: posting.urgency,
+              quantityNeeded: `${posting.qty_needed} lbs`,
+              donorCount: donorCount,
+              fromDate: posting.from_date,
+              toDate: posting.to_date,
+              fromTime: posting.from_time,
+              toTime: posting.to_time,
             };
           } catch (err) {
-            console.error(`Error fetching donor ${meetup.donor_id}:`, err);
+            console.error(`Error fetching meetups for posting ${posting.id}:`, err);
             return {
-              id: meetup.id,
-              name: 'Unknown Donor',
-              quantity: `${meetup.quantity} lbs`,
-              scheduledDate: meetup.scheduled_date,
-              scheduledTime: meetup.scheduled_time,
-              completed: meetup.completed,
-              verified: false,
-              timeChangeRequest: null,
+              id: posting.id,
+              name: posting.food_name,
+              urgency: posting.urgency,
+              quantityNeeded: `${posting.qty_needed} lbs`,
+              donorCount: 0,
+              fromDate: posting.from_date,
+              toDate: posting.to_date,
+              fromTime: posting.from_time,
+              toTime: posting.to_time,
             };
           }
         })
       );
 
-      setDonorsForItem(donorsWithDetails);
+      setFoodItems(postingsWithDonorCounts);
+      setError(null);
     } catch (err) {
-      console.error('Error fetching donors for item:', err);
-      setError('Failed to load donors for this item');
-      setDonorsForItem([]);
+      console.error('Error fetching donation postings:', err);
+      setError(err.message);
     } finally {
-      setDonorsLoading(false);
+      setLoading(false);
     }
   };
+
+  if (user) {
+    fetchDonationPostings();
+  }
+}, [FOOD_BANK_ID, user]);
+
+
+const handleItemClick = async (item) => {
+  setSelectedItem(item);
+  setDonorsLoading(true);
+  
+  try {
+    // Fetch ONLY non-completed meetups for this posting
+    const meetupsResponse = await fetch(
+      `http://127.0.0.1:5000/api/meetups?posting_id=${item.id}&completed=false`
+    );
+    
+    if (!meetupsResponse.ok) {
+      throw new Error('Failed to fetch meetups');
+    }
+
+    const meetupsData = await meetupsResponse.json();
+    const meetups = meetupsData.meetups || [];
+
+    // Fetch time change requests for these meetups
+    const timeChangeResponse = await fetch(
+      'http://127.0.0.1:5000/api/meetup_time_change_requests'
+    );
+
+    let timeChangeRequests = [];
+    if (timeChangeResponse.ok) {
+      const timeChangeData = await timeChangeResponse.json();
+      timeChangeRequests = timeChangeData.requests || [];
+      console.log('Fetched time change requests:', timeChangeRequests);
+    }
+
+    // Create a map of meetup_id -> time change request
+    const timeChangeByMeetupId = {};
+    timeChangeRequests.forEach(req => {
+      // Only store the most recent request for each meetup
+      if (!timeChangeByMeetupId[req.meetup_id] || 
+          new Date(req.created_at) > new Date(timeChangeByMeetupId[req.meetup_id].created_at)) {
+        timeChangeByMeetupId[req.meetup_id] = req;
+      }
+    });
+
+    // Fetch donor details for each meetup
+    const donorsWithDetails = await Promise.all(
+      meetups.map(async (meetup) => {
+        try {
+          // Fetch donor profile
+          const donorResponse = await fetch(
+            `http://127.0.0.1:5000/api/donors/${meetup.donor_id}`
+          );
+
+          let donorName = 'Unknown Donor';
+          if (donorResponse.ok) {
+            const donorData = await donorResponse.json();
+            donorName = `${donorData.first_name} ${donorData.last_name}`;
+          }
+
+          // Check for time change request status
+          const timeChangeRequest = timeChangeByMeetupId[meetup.id];
+
+          return {
+            id: meetup.id,
+            name: donorName,
+            quantity: `${meetup.quantity} lbs`,
+            scheduledDate: meetup.scheduled_date,
+            scheduledTime: meetup.scheduled_time,
+            completed: meetup.completed,
+            verified: true,
+            timeChangeRequest: timeChangeRequest || null,
+          };
+        } catch (err) {
+          console.error(`Error fetching donor ${meetup.donor_id}:`, err);
+          return {
+            id: meetup.id,
+            name: 'Unknown Donor',
+            quantity: `${meetup.quantity} lbs`,
+            scheduledDate: meetup.scheduled_date,
+            scheduledTime: meetup.scheduled_time,
+            completed: meetup.completed,
+            verified: false,
+            timeChangeRequest: null,
+          };
+        }
+      })
+    );
+
+    setDonorsForItem(donorsWithDetails);
+  } catch (err) {
+    console.error('Error fetching donors for item:', err);
+    setError('Failed to load donors for this item');
+    setDonorsForItem([]);
+  } finally {
+    setDonorsLoading(false);
+  }
+};
+
 
   const handleBackToItems = () => {
     setSelectedItem(null);

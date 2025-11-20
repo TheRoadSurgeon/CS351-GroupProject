@@ -346,9 +346,13 @@ function DashboardDonor() {
                   value={donationQuantity}
                   onChange={(e) => setDonationQuantity(e.target.value)}
                   min="0.1"
+                  max={parseFloat(selectedItem?.quantityNeeded?.replace(' lbs', '') || '0')}
                   step="0.1"
                   required
                 />
+                <small style={{ color: '#666', fontSize: '0.85em' }}>
+                  Maximum: {selectedItem?.quantityNeeded}
+                </small>
               </div>
 
               <div className="form-group">

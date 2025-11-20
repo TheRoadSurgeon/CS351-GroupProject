@@ -245,22 +245,9 @@ class Meetup(db.Model):
     __tablename__ = "meetups"
 
     id = db.Column(UUID(as_uuid=True), primary_key=True)
-
-    posting_id = db.Column(
-        UUID(as_uuid=True),
-        db.ForeignKey("donation_postings.id"),
-        nullable=False,
-    )
-    donor_id = db.Column(
-        UUID(as_uuid=True),
-        db.ForeignKey("donors.id"),
-        nullable=False,
-    )
-    food_bank_id = db.Column(
-        UUID(as_uuid=True),
-        db.ForeignKey("food_banks.id"),
-        nullable=False,
-    )
+    posting_id = db.Column(UUID(as_uuid=True), db.ForeignKey("donation_postings.id"), nullable=False)
+    donor_id = db.Column(UUID(as_uuid=True), db.ForeignKey("donors.id"), nullable=False)
+    food_bank_id = db.Column(UUID(as_uuid=True), db.ForeignKey("food_banks.id"), nullable=False)
 
     donation_item = db.Column(db.String, nullable=False)
     quantity = db.Column(db.Numeric, nullable=False)
@@ -268,6 +255,7 @@ class Meetup(db.Model):
     scheduled_time = db.Column(db.Time, nullable=False)
     
     completed = db.Column(db.Boolean, nullable=False, default=False)
+    completion_status = db.Column(db.String, nullable=True)  # 'completed' or 'not_completed'
     completed_at = db.Column(db.DateTime(timezone=True), nullable=True)
     
     created_at = db.Column(db.DateTime(timezone=True), nullable=False)
@@ -285,17 +273,14 @@ class Meetup(db.Model):
             "food_bank_id": str(self.food_bank_id),
             "donation_item": self.donation_item,
             "quantity": float(self.quantity) if self.quantity is not None else None,
-            "scheduled_date": self.scheduled_date.isoformat()
-            if self.scheduled_date else None,
-            "scheduled_time": self.scheduled_time.isoformat()
-            if self.scheduled_time else None,
+            "scheduled_date": self.scheduled_date.isoformat() if self.scheduled_date else None,
+            "scheduled_time": self.scheduled_time.isoformat() if self.scheduled_time else None,
             "completed": self.completed,
-            "completed_at": self.completed_at.isoformat()
-            if self.completed_at else None,
+            "completion_status": self.completion_status,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
-
 
 class MeetupTimeChangeRequest(db.Model):
     __tablename__ = "meetup_time_change_requests"

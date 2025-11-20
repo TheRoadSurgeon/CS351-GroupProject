@@ -406,6 +406,7 @@ def get_donor(donor_id):
     
     return jsonify(donor.to_json())
 
+
 @app.post("/api/meetups")
 def create_meetup():
     """
@@ -485,6 +486,16 @@ def create_meetup():
     if not food_bank:
         return jsonify({"error": "Food bank not found"}), 404
 
+    # Check if donation quantity exceeds what's needed
+    if qty > posting.qty_needed:
+        return jsonify({
+            "error": f"Donation quantity ({qty} lbs) exceeds quantity needed ({posting.qty_needed} lbs)"
+        }), 400
+
+    # Deduct the quantity from the posting
+    posting.qty_needed -= qty
+    posting.updated_at = datetime.utcnow()
+
     now = datetime.utcnow()
 
     meetup = Meetup(
@@ -506,6 +517,54 @@ def create_meetup():
     db.session.commit()
     
     return jsonify(meetup.to_json()), 201
+
+@app.put("/api/meetups/<meetup_id>/complete")
+def mark_meetup_completed(meetup_id):
+    """
+    Mark a meetup as completed or not completed.
+    Required field: completed (true/false)
+    """
+    data = request.get_json(silent=True) or {}
+    completed = data.get("completed")
+
+    if completed is None:
+        return jsonify({"error": "completed field is required (true/false)"}), 400
+
+    try:
+        meetup_uuid = UUID(meetup_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid meetup_id format"}), 400
+
+    meetup = Meetup.query.filter_by(id=meetup_uuid).first()
+    if not meetup:
+        return jsonify({"error": "Meetup not found"}), 404
+
+    # Check if meetup is already completed
+    if meetup.completed:
+        return jsonify({"error": "Meetup is already marked as completed"}), 400
+
+    now = datetime.utcnow()
+    
+    meetup.completed = True
+    meetup.completed_at = now
+    
+    # Set completion_status based on which button was clicked
+    if completed:
+        meetup.completion_status = 'completed'
+        # Donation was successful, quantity stays deducted
+    else:
+        meetup.completion_status = 'not_completed'
+        # Donation failed, add the quantity back to the posting
+        posting = DonationPosting.query.filter_by(id=meetup.posting_id).first()
+        if posting:
+            posting.qty_needed += meetup.quantity
+            posting.updated_at = now
+    
+    meetup.updated_at = now
+    
+    db.session.commit()
+    
+    return jsonify(meetup.to_json())
 
 
 # --- Meetup Time Change Requests API ---
