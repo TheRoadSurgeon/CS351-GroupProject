@@ -220,36 +220,45 @@ def list_food_banks():
 def list_donation_postings():
     """
     List donation postings.
+    Only returns active (non-deleted) postings by default.
     """
     food_bank_id = request.args.get("food_bank_id")
-    query = DonationPosting.query
+    
+    query = DonationPosting.query.filter_by(is_active=True)  # Only active postings
+    
     if food_bank_id:
-        query = query.filter_by(food_bank_id=food_bank_id)
+        try:
+            fb_uuid = UUID(food_bank_id)
+            query = query.filter_by(food_bank_id=fb_uuid)
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid food_bank_id format"}), 400
+    
     postings = query.order_by(DonationPosting.created_at.desc()).all()
     return jsonify({"postings": [p.to_json() for p in postings]})
 
 
-# @app.get("/api/donation_postings")
-# def get_donation_postings():
-#     food_bank_id = request.args.get("food_bank_id")
+@app.get("/api/donation_postings")
+def get_donation_postings():
+    food_bank_id = request.args.get("food_bank_id")
 
-#     if food_bank_id:
-#         try:
-#             fb_uuid = UUID(food_bank_id)
-#         except (ValueError, TypeError):
-#             return jsonify({"error": "Invalid food_bank_id format"}), 400
+    if food_bank_id:
+        try:
+            fb_uuid = UUID(food_bank_id)
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid food_bank_id format"}), 400
 
-#         # Only return active postings
-#         postings = DonationPosting.query.filter_by(
-#             food_bank_id=fb_uuid,
-#             is_active=True  # Add this filter
-#         ).all()
+        # Only return active postings
+        postings = DonationPosting.query.filter_by(
+            food_bank_id=fb_uuid,
+            is_active=True  # Filter out soft-deleted postings
+        ).all()
         
-#         return jsonify({"postings": [p.to_json() for p in postings]}), 200
+        return jsonify({"postings": [p.to_json() for p in postings]}), 200
 
-#     # Only return active postings
-#     postings = DonationPosting.query.filter_by(is_active=True).all()
-#     return jsonify({"postings": [p.to_json() for p in postings]}), 200
+    # Only return active postings
+    postings = DonationPosting.query.filter_by(is_active=True).all()
+    return jsonify({"postings": [p.to_json() for p in postings]}), 200
+
 
 
 @app.get("/api/donation_postings/<posting_id>")
