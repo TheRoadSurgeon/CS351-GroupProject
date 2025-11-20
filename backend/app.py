@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from uuid import uuid4, UUID
 from threading import Lock
@@ -815,17 +815,34 @@ def leaderboard():
     """
     Build a leaderboard of donors based on TOTAL WEIGHT donated
     (sum of Meetup.quantity) for completed meetups.
+
+    Optional query param:
+      - timeframe = "week" | "month" | "alltime" (default: alltime)
     """
+    timeframe = (request.args.get("timeframe") or "alltime").lower()
+
+    now = datetime.now()
+    cutoff = None
+
+    if timeframe == "week":
+        cutoff = now - timedelta(days=7)
+    elif timeframe == "month":
+        cutoff = now - timedelta(days=30)
+ 
+    query = db.session.query(
+        Meetup.donor_id,
+        db.func.count(Meetup.id).label("total_meetups"),
+        db.func.coalesce(db.func.sum(Meetup.quantity), 0).label("total_weight"),
+    ).filter(Meetup.completed.is_(True))
+
+    if cutoff is not None:
+        query = query.filter(Meetup.completed_at >= cutoff)
+
     rows = (
-        db.session.query(
-            Meetup.donor_id,
-            db.func.count(Meetup.id).label("total_meetups"),
-            db.func.coalesce(db.func.sum(Meetup.quantity), 0).label("total_weight"),
-        )
-        .filter(Meetup.status == "completed")
+        query
         .group_by(Meetup.donor_id)
         .order_by(db.func.coalesce(db.func.sum(Meetup.quantity), 0).desc())
-        .limit(10)
+        .limit(50)
         .all()
     )
 
@@ -852,7 +869,11 @@ def leaderboard():
         })
         rank += 1
 
-    return jsonify({"leaderboard": out})
+    return jsonify({
+        "timeframe": timeframe,
+        "leaderboard": out
+    })
+
 
 
 if __name__ == "__main__":
