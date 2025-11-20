@@ -197,15 +197,17 @@ def create_profile():
 def list_food_banks():
     """
     List all food banks with their item counts.
+    Only counts active (non-deleted) postings.
     """
     banks = FoodBank.query.order_by(FoodBank.name).all()
     
     # Get posting counts for each food bank
     bank_data = []
     for bank in banks:
-        # Count all donation postings for this food bank
+        # Count only active donation postings for this food bank
         posting_count = DonationPosting.query.filter(
-            DonationPosting.food_bank_id == bank.id
+            DonationPosting.food_bank_id == bank.id,
+            DonationPosting.is_active != False
         ).count()
         
         bank_json = bank.to_json()
@@ -215,27 +217,6 @@ def list_food_banks():
     return jsonify({"food_banks": bank_data})
 
 # --- Donation postings API ---
-
-@app.get("/api/donation_postings")
-def list_donation_postings():
-    """
-    List donation postings.
-    Only returns active (non-deleted) postings by default.
-    """
-    food_bank_id = request.args.get("food_bank_id")
-    
-    query = DonationPosting.query.filter_by(is_active=True)  # Only active postings
-    
-    if food_bank_id:
-        try:
-            fb_uuid = UUID(food_bank_id)
-            query = query.filter_by(food_bank_id=fb_uuid)
-        except (ValueError, TypeError):
-            return jsonify({"error": "Invalid food_bank_id format"}), 400
-    
-    postings = query.order_by(DonationPosting.created_at.desc()).all()
-    return jsonify({"postings": [p.to_json() for p in postings]})
-
 
 @app.get("/api/donation_postings")
 def get_donation_postings():

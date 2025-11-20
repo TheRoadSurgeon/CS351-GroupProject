@@ -24,11 +24,20 @@ function DashboardDonor() {
     amount: '',
     donationTime: ''
   });
+  const [lastFetchTime, setLastFetchTime] = useState(null);
+  const [foodBankItemsCache, setFoodBankItemsCache] = useState({});
   const { user } = useAuth();
  
   
   useEffect(() => {
     const fetchFoodBanks = async () => {
+      // Avoid refetching if we fetched within the last 30 seconds
+      const now = Date.now();
+      if (lastFetchTime && now - lastFetchTime < 30000) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
@@ -49,6 +58,7 @@ function DashboardDonor() {
         }));
 
         setNearbyFoodBanks(transformedData);
+        setLastFetchTime(Date.now());
       } catch (error) {
         console.error('Error fetching food banks:', error);
         setError('Failed to load food banks. Please try again.');
@@ -58,7 +68,7 @@ function DashboardDonor() {
     };
 
     fetchFoodBanks();
-  }, []);
+  }, [lastFetchTime]);
 
   useEffect(() => {
     if (searchTerm.trim().length < 2) {
@@ -83,6 +93,13 @@ function DashboardDonor() {
 
   const handleFoodBankClick = async (foodBank) => {
     setSelectedFoodBank(foodBank);
+    
+    // Check if we have cached data for this food bank
+    if (foodBankItemsCache[foodBank.id]) {
+      setFoodItemsNeeded(foodBankItemsCache[foodBank.id]);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     
@@ -109,6 +126,11 @@ function DashboardDonor() {
       }));
       
       setFoodItemsNeeded(transformedItems);
+      // Cache the items for this food bank
+      setFoodBankItemsCache(prev => ({
+        ...prev,
+        [foodBank.id]: transformedItems
+      }));
     } catch (err) {
       console.error('Error fetching food items:', err);
       setError('Failed to load food items for this food bank. Please try again.');
@@ -173,6 +195,13 @@ function DashboardDonor() {
       const data = await response.json();
       console.log('Donation scheduled successfully:', data);
 
+      // Clear the cache for this food bank to refresh the data
+      setFoodBankItemsCache(prev => {
+        const newCache = { ...prev };
+        delete newCache[selectedFoodBank.id];
+        return newCache;
+      });
+
       alert('Donation scheduled successfully! The food bank will be notified.');
       handleCloseModal();
     } catch (error) {
@@ -210,7 +239,11 @@ function DashboardDonor() {
     <div id="dashboard">
       <div className="dashboard-grid">
         <div className="main-content">
-          {!selectedFoodBank ? (
+          {loading && !selectedFoodBank ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+              <div className="spinner"></div>
+            </div>
+          ) : !selectedFoodBank ? (
             <>
               <div className="content-header">
                 <h2>Nearby Food Banks</h2>
@@ -276,45 +309,51 @@ function DashboardDonor() {
                 </div>
               </div>
 
-              <div className="items-list">
-                {foodItemsNeeded.length > 0 ? (
-                  foodItemsNeeded
-                    .filter(item => {
-                      if (!searchTerm.trim()) return true;
-                      const searchLower = searchTerm.toLowerCase();
-                      return item.name.toLowerCase().includes(searchLower);
-                    })
-                    .map(item => (
-                      <div key={item.id} className="item-card">
-                        <div className="item-info">
-                          <h3>
-                            {item.name}
-                            <span className={`urgency-badge ${item.urgency.toLowerCase()}`}>
-                              {item.urgency}
-                            </span>
-                          </h3>
-                          <p className="quantity">Need: {item.quantityNeeded}</p>
+              {loading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                  <div className="spinner"></div>
+                </div>
+              ) : (
+                <div className="items-list">
+                  {foodItemsNeeded.length > 0 ? (
+                    foodItemsNeeded
+                      .filter(item => {
+                        if (!searchTerm.trim()) return true;
+                        const searchLower = searchTerm.toLowerCase();
+                        return item.name.toLowerCase().includes(searchLower);
+                      })
+                      .map(item => (
+                        <div key={item.id} className="item-card">
+                          <div className="item-info">
+                            <h3>
+                              {item.name}
+                              <span className={`urgency-badge ${item.urgency.toLowerCase()}`}>
+                                {item.urgency}
+                              </span>
+                            </h3>
+                            <p className="quantity">Need: {item.quantityNeeded}</p>
+                          </div>
+                          <button 
+                            className="donate-btn"
+                            onClick={() => handleDonateClick(item)}
+                          >
+                            Donate This Item
+                          </button>
                         </div>
-                        <button 
-                          className="donate-btn"
-                          onClick={() => handleDonateClick(item)}
-                        >
-                          Donate This Item
-                        </button>
-                      </div>
-                    ))
-                ) : (
-                  <p className="no-items">No items needed at this time.</p>
-                )}
-                {foodItemsNeeded.length > 0 && 
-                 foodItemsNeeded.filter(item => {
-                   if (!searchTerm.trim()) return true;
-                   const searchLower = searchTerm.toLowerCase();
-                   return item.name.toLowerCase().includes(searchLower);
-                 }).length === 0 && (
-                  <p className="no-items">No items match your search.</p>
-                )}
-              </div>
+                      ))
+                  ) : (
+                    <p className="no-items">No items needed at this time.</p>
+                  )}
+                  {foodItemsNeeded.length > 0 && 
+                   foodItemsNeeded.filter(item => {
+                     if (!searchTerm.trim()) return true;
+                     const searchLower = searchTerm.toLowerCase();
+                     return item.name.toLowerCase().includes(searchLower);
+                   }).length === 0 && (
+                    <p className="no-items">No items match your search.</p>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>
