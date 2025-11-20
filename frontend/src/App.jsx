@@ -7,7 +7,8 @@ import FoodBanks from "./pages/FoodBanks";
 import LeaderBoard from "./pages/Leaderboard";
 import Topbar from "./components/Topbar";
 import Sidebar from "./components/SideBar";
-import DonationForm from "./pages/DonationForm";
+import MyDonations from "./pages/MyDonations";
+import MyMeetups from "./pages/MyMeetups";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -58,8 +59,8 @@ function MainApp()
       case "Leaderboard":
         return <LeaderBoard/>
       
-      case "Donation Form":
-        return <DonationForm />
+      case "Donations":
+        return userRole === "Food Bank" ? <MyMeetups /> : <MyDonations />
 
       default:
         // Default also respects user role

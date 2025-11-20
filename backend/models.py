@@ -165,7 +165,7 @@ class DonationPosting(db.Model):
 
     created_at = db.Column(db.DateTime(timezone=False), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=False), nullable=False)
-
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
     food_bank = db.relationship("FoodBank", backref="postings")
 
     def to_json(self):
@@ -245,22 +245,9 @@ class Meetup(db.Model):
     __tablename__ = "meetups"
 
     id = db.Column(UUID(as_uuid=True), primary_key=True)
-
-    posting_id = db.Column(
-        UUID(as_uuid=True),
-        db.ForeignKey("donation_postings.id"),
-        nullable=False,
-    )
-    donor_id = db.Column(
-        UUID(as_uuid=True),
-        db.ForeignKey("donors.id"),
-        nullable=False,
-    )
-    food_bank_id = db.Column(
-        UUID(as_uuid=True),
-        db.ForeignKey("food_banks.id"),
-        nullable=False,
-    )
+    posting_id = db.Column(UUID(as_uuid=True), db.ForeignKey("donation_postings.id"), nullable=False)
+    donor_id = db.Column(UUID(as_uuid=True), db.ForeignKey("donors.id"), nullable=False)
+    food_bank_id = db.Column(UUID(as_uuid=True), db.ForeignKey("food_banks.id"), nullable=False)
 
     donation_item = db.Column(db.String, nullable=False)
     quantity = db.Column(db.Numeric, nullable=False)
@@ -268,6 +255,7 @@ class Meetup(db.Model):
     scheduled_time = db.Column(db.Time, nullable=False)
     
     completed = db.Column(db.Boolean, nullable=False, default=False)
+    completion_status = db.Column(db.String, nullable=True)  # 'completed' or 'not_completed'
     completed_at = db.Column(db.DateTime(timezone=True), nullable=True)
     
     created_at = db.Column(db.DateTime(timezone=True), nullable=False)
@@ -285,15 +273,50 @@ class Meetup(db.Model):
             "food_bank_id": str(self.food_bank_id),
             "donation_item": self.donation_item,
             "quantity": float(self.quantity) if self.quantity is not None else None,
-            "scheduled_date": self.scheduled_date.isoformat()
-            if self.scheduled_date else None,
-            "scheduled_time": self.scheduled_time.isoformat()
-            if self.scheduled_time else None,
+            "scheduled_date": self.scheduled_date.isoformat() if self.scheduled_date else None,
+            "scheduled_time": self.scheduled_time.isoformat() if self.scheduled_time else None,
             "completed": self.completed,
-            "completed_at": self.completed_at.isoformat()
-            if self.completed_at else None,
+            "completion_status": self.completion_status,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+class MeetupTimeChangeRequest(db.Model):
+    __tablename__ = "meetup_time_change_requests"
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True)
+    meetup_id = db.Column(
+        UUID(as_uuid=True),
+        db.ForeignKey("meetups.id"),
+        nullable=False,
+    )
+    requested_by = db.Column(db.String, nullable=False)  # Name of the food bank
+    requested_to = db.Column(db.String, nullable=False)  # Name of the donor
+    new_date = db.Column(db.Date, nullable=False)
+    new_time = db.Column(db.Time, nullable=False)
+    reason = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String, nullable=False, default='pending')  # 'pending', 'approved', 'rejected'
+    
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), nullable=False)
+    responded_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+    meetup = db.relationship("Meetup", backref="time_change_requests")
+
+    def to_json(self):
+        return {
+            "id": str(self.id),
+            "meetup_id": str(self.meetup_id),
+            "requested_by": self.requested_by,
+            "requested_to": self.requested_to,
+            "new_date": self.new_date.isoformat() if self.new_date else None,
+            "new_time": self.new_time.isoformat() if self.new_time else None,
+            "reason": self.reason,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "responded_at": self.responded_at.isoformat() if self.responded_at else None,
         }
 
 

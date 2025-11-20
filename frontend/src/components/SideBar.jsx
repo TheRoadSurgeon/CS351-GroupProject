@@ -18,6 +18,12 @@ function Sidebar({setPage, currentPage}) {
               Dashboard
             </button>
             <button 
+              onClick={() => setPage("Donations")}
+              className={currentPage === "Donations" ? "active" : ""}  
+            >
+              Donations
+            </button>
+            <button 
               onClick={() => setPage("Food Banks")}
               className={currentPage === "Food Banks" ? "active" : ""}
             >
@@ -28,12 +34,6 @@ function Sidebar({setPage, currentPage}) {
               className={currentPage === "Leaderboard" ? "active" : ""}
             >
               Leaderboard
-            </button>
-            <button 
-              onClick={() => setPage("Donation Form")}
-              className={currentPage === "Donation Form" ? "active" : ""}  
-            >
-              Donation Form
             </button>
         </div>    
 
