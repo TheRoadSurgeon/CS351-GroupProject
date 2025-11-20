@@ -45,7 +45,7 @@ function DashboardDonor() {
           name: bank.name,
           distance: 'N/A',
           verified: true,
-          itemCount: 0
+          itemCount: bank.items_needed || 0
         }));
 
         setNearbyFoodBanks(transformedData);
@@ -224,19 +224,17 @@ function DashboardDonor() {
               </div>
 
               <div className="items-list">
-                {nearbyFoodBanks.map(bank => (
+                {nearbyFoodBanks.map((bank) => (
                   <div 
                     key={bank.id} 
                     className="item-card clickable"
                     onClick={() => handleFoodBankClick(bank)}
                   >
                     <div className="item-info">
-                      <h3>
-                        {bank.name} 
-                        {bank.verified && <span className="verified">✓</span>}
-                      </h3>
-                      <p className="distance">{bank.distance}</p>
-                      <p className="item-count">{bank.itemCount} item{bank.itemCount !== 1 ? 's' : ''} needed</p>
+                      <h3>{bank.name}</h3>
+                      <p className="item-count">
+                        {bank.itemCount} item{bank.itemCount !== 1 ? 's' : ''} needed
+                      </p>
                     </div>
                     <button className="view-items-btn">View Items →</button>
                   </div>
@@ -346,9 +344,13 @@ function DashboardDonor() {
                   value={donationQuantity}
                   onChange={(e) => setDonationQuantity(e.target.value)}
                   min="0.1"
+                  max={parseFloat(selectedItem?.quantityNeeded?.replace(' lbs', '') || '0')}
                   step="0.1"
                   required
                 />
+                <small style={{ color: '#666', fontSize: '0.85em' }}>
+                  Maximum: {selectedItem?.quantityNeeded}
+                </small>
               </div>
 
               <div className="form-group">
@@ -363,6 +365,9 @@ function DashboardDonor() {
                   max={selectedItem?.toDate}
                   required
                 />
+                <small style={{ color: '#666', fontSize: '0.85em', display: 'block', marginTop: '4px' }}>
+                  Dates: {selectedItem?.fromDate ? new Date(selectedItem.fromDate).toLocaleDateString() : ''} to {selectedItem?.toDate ? new Date(selectedItem.toDate).toLocaleDateString() : ''}
+                </small>
               </div>
 
               <div className="form-group">
@@ -376,10 +381,9 @@ function DashboardDonor() {
                   required
                 />
                 <small style={{ color: '#666', fontSize: '0.85em' }}>
-                  Available: {selectedItem?.fromTime} - {selectedItem?.toTime}
+                  Available Time: {selectedItem?.fromTime} - {selectedItem?.toTime}
                 </small>
               </div>
-
               <button type="submit" className="submit-btn" disabled={submitLoading}>
                 {submitLoading ? 'Scheduling...' : 'Confirm Donation'}
               </button>

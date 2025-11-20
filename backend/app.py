@@ -10,6 +10,7 @@ from models import (
     FoodBank,
     DonationPosting,
     Meetup,
+    MeetupTimeChangeRequest,
     Leaderboard,
     Profile,
     Donor,
@@ -194,9 +195,24 @@ def create_profile():
 
 @app.get("/api/food_banks")
 def list_food_banks():
+    """
+    List all food banks with their item counts.
+    """
     banks = FoodBank.query.order_by(FoodBank.name).all()
-    return jsonify({"food_banks": [b.to_json() for b in banks]})
-
+    
+    # Get posting counts for each food bank
+    bank_data = []
+    for bank in banks:
+        # Count all donation postings for this food bank
+        posting_count = DonationPosting.query.filter(
+            DonationPosting.food_bank_id == bank.id
+        ).count()
+        
+        bank_json = bank.to_json()
+        bank_json['items_needed'] = posting_count
+        bank_data.append(bank_json)
+    
+    return jsonify({"food_banks": bank_data})
 
 # --- Donation postings API ---
 
@@ -204,13 +220,86 @@ def list_food_banks():
 def list_donation_postings():
     """
     List donation postings.
+    Only returns active (non-deleted) postings by default.
     """
     food_bank_id = request.args.get("food_bank_id")
-    query = DonationPosting.query
+    
+    query = DonationPosting.query.filter_by(is_active=True)  # Only active postings
+    
     if food_bank_id:
-        query = query.filter_by(food_bank_id=food_bank_id)
+        try:
+            fb_uuid = UUID(food_bank_id)
+            query = query.filter_by(food_bank_id=fb_uuid)
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid food_bank_id format"}), 400
+    
     postings = query.order_by(DonationPosting.created_at.desc()).all()
     return jsonify({"postings": [p.to_json() for p in postings]})
+
+
+@app.get("/api/donation_postings")
+def get_donation_postings():
+    food_bank_id = request.args.get("food_bank_id")
+
+    if food_bank_id:
+        try:
+            fb_uuid = UUID(food_bank_id)
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid food_bank_id format"}), 400
+
+        # Only return active postings
+        postings = DonationPosting.query.filter_by(
+            food_bank_id=fb_uuid,
+            is_active=True  # Filter out soft-deleted postings
+        ).all()
+        
+        return jsonify({"postings": [p.to_json() for p in postings]}), 200
+
+    # Only return active postings
+    postings = DonationPosting.query.filter_by(is_active=True).all()
+    return jsonify({"postings": [p.to_json() for p in postings]}), 200
+
+
+
+@app.get("/api/donation_postings/<posting_id>")
+def get_single_donation_posting(posting_id):
+    """
+    Get a single donation posting by ID.
+    This returns the posting even if it's been soft-deleted (is_active=False)
+    so that historical meetups can still display the food item name.
+    """
+    try:
+        posting_uuid = UUID(posting_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid posting_id format"}), 400
+
+    posting = DonationPosting.query.filter_by(id=posting_uuid).first()
+    if not posting:
+        return jsonify({"error": "Posting not found"}), 404
+
+    return jsonify(posting.to_json()), 200
+
+
+@app.delete("/api/donation_postings/<posting_id>")
+def soft_delete_posting(posting_id):
+    """
+    Soft delete a donation posting (marks as inactive).
+    """
+    try:
+        posting_uuid = UUID(posting_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid posting_id format"}), 400
+
+    posting = DonationPosting.query.filter_by(id=posting_uuid).first()
+    if not posting:
+        return jsonify({"error": "Posting not found"}), 404
+
+    posting.is_active = False
+    posting.updated_at = datetime.utcnow()
+    
+    db.session.commit()
+    
+    return jsonify({"message": "Posting deleted successfully"}), 200
 
 
 @app.post("/api/donation_postings")
@@ -388,6 +477,7 @@ def get_donor(donor_id):
     
     return jsonify(donor.to_json())
 
+
 @app.post("/api/meetups")
 def create_meetup():
     """
@@ -467,6 +557,16 @@ def create_meetup():
     if not food_bank:
         return jsonify({"error": "Food bank not found"}), 404
 
+    # Check if donation quantity exceeds what's needed
+    if qty > posting.qty_needed:
+        return jsonify({
+            "error": f"Donation quantity ({qty} lbs) exceeds quantity needed ({posting.qty_needed} lbs)"
+        }), 400
+
+    # Deduct the quantity from the posting
+    posting.qty_needed -= qty
+    posting.updated_at = datetime.utcnow()
+
     now = datetime.utcnow()
 
     meetup = Meetup(
@@ -488,6 +588,224 @@ def create_meetup():
     db.session.commit()
     
     return jsonify(meetup.to_json()), 201
+
+@app.put("/api/meetups/<meetup_id>/complete")
+def mark_meetup_completed(meetup_id):
+    """
+    Mark a meetup as completed or not completed.
+    Required field: completed (true/false)
+    """
+    data = request.get_json(silent=True) or {}
+    completed = data.get("completed")
+
+    if completed is None:
+        return jsonify({"error": "completed field is required (true/false)"}), 400
+
+    try:
+        meetup_uuid = UUID(meetup_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid meetup_id format"}), 400
+
+    meetup = Meetup.query.filter_by(id=meetup_uuid).first()
+    if not meetup:
+        return jsonify({"error": "Meetup not found"}), 404
+
+    # Check if meetup is already completed
+    if meetup.completed:
+        return jsonify({"error": "Meetup is already marked as completed"}), 400
+
+    now = datetime.utcnow()
+    
+    meetup.completed = True
+    meetup.completed_at = now
+    
+    # Set completion_status based on which button was clicked
+    if completed:
+        meetup.completion_status = 'completed'
+        # Donation was successful, quantity stays deducted
+    else:
+        meetup.completion_status = 'not_completed'
+        # Donation failed, add the quantity back to the posting
+        posting = DonationPosting.query.filter_by(id=meetup.posting_id).first()
+        if posting:
+            posting.qty_needed += meetup.quantity
+            posting.updated_at = now
+    
+    meetup.updated_at = now
+    
+    db.session.commit()
+    
+    return jsonify(meetup.to_json())
+
+
+# --- Meetup Time Change Requests API ---
+
+@app.post("/api/meetup_time_change_requests")
+def create_time_change_request():
+    """
+    Create a new meetup time change request.
+    Required fields: meetup_id, food_bank_id, new_date, new_time
+    Optional: reason
+    """
+    data = request.get_json(silent=True) or {}
+
+    meetup_id = data.get("meetup_id")
+    food_bank_id = data.get("food_bank_id")
+    new_date_str = data.get("new_date")
+    new_time_str = data.get("new_time")
+
+    if not all([meetup_id, food_bank_id, new_date_str, new_time_str]):
+        return jsonify(
+            {"error": "meetup_id, food_bank_id, new_date, and new_time are required"}
+        ), 400
+
+    # Validate UUID
+    try:
+        meetup_uuid = UUID(meetup_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid meetup_id format"}), 400
+
+    # Validate date and time
+    try:
+        from datetime import date, time
+        new_date = date.fromisoformat(new_date_str)
+        time_parts = new_time_str.split(':')
+        if len(time_parts) == 2:
+            new_time = time(int(time_parts[0]), int(time_parts[1]))
+        elif len(time_parts) == 3:
+            new_time = time(int(time_parts[0]), int(time_parts[1]), int(time_parts[2]))
+        else:
+            raise ValueError("Invalid time format")
+    except (ValueError, TypeError) as e:
+        return jsonify(
+            {"error": f"Invalid date/time format. Use YYYY-MM-DD for date and HH:MM for time. Error: {str(e)}"}
+        ), 400
+
+    # Check if meetup exists
+    meetup = Meetup.query.filter_by(id=meetup_uuid).first()
+    if not meetup:
+        return jsonify({"error": "Meetup not found"}), 404
+
+    # Validate food_bank_id
+    try:
+        fb_uuid = UUID(food_bank_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid food_bank_id format"}), 400
+
+    # Get the food bank name
+    food_bank = FoodBank.query.filter_by(id=fb_uuid).first()
+    if not food_bank:
+        return jsonify({"error": "Food bank not found"}), 404
+
+    # Get the donor name from the meetup
+    donor = Donor.query.filter_by(id=meetup.donor_id).first()
+    if not donor:
+        return jsonify({"error": "Donor not found"}), 404
+    
+    donor_name = f"{donor.first_name} {donor.last_name}".strip()
+
+    # Check if there's already a pending request for this meetup
+    existing_request = MeetupTimeChangeRequest.query.filter_by(
+        meetup_id=meetup_uuid,
+        status='pending'
+    ).first()
+    
+    if existing_request:
+        return jsonify({"error": "There is already a pending time change request for this meetup"}), 400
+
+    reason = data.get("reason", "")
+    now = datetime.utcnow()
+
+    time_change_request = MeetupTimeChangeRequest(
+        id=uuid4(),
+        meetup_id=meetup_uuid,
+        requested_by=food_bank.name,
+        requested_to=donor_name,
+        new_date=new_date,
+        new_time=new_time,
+        reason=reason,
+        status='pending',
+        created_at=now,
+        updated_at=now,
+    )
+
+    db.session.add(time_change_request)
+    db.session.commit()
+
+    return jsonify(time_change_request.to_json()), 201
+
+
+@app.get("/api/meetup_time_change_requests")
+def list_time_change_requests():
+    """
+    List meetup time change requests.
+    Optional filters: meetup_id, status ('pending', 'approved', 'rejected')
+    """
+    meetup_id = request.args.get("meetup_id")
+    status = request.args.get("status")
+
+    query = MeetupTimeChangeRequest.query
+
+    if meetup_id:
+        try:
+            meetup_uuid = UUID(meetup_id)
+            query = query.filter_by(meetup_id=meetup_uuid)
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid meetup_id format"}), 400
+
+    if status:
+        if status not in ['pending', 'approved', 'rejected']:
+            return jsonify({"error": "status must be 'pending', 'approved', or 'rejected'"}), 400
+        query = query.filter_by(status=status)
+
+    requests = query.order_by(MeetupTimeChangeRequest.created_at.desc()).all()
+    return jsonify({"requests": [r.to_json() for r in requests]})
+
+
+@app.put("/api/meetup_time_change_requests/<request_id>")
+def respond_to_time_change_request(request_id):
+    """
+    Respond to a time change request (approve or reject).
+    Required field: action ('approve' or 'reject')
+    """
+    data = request.get_json(silent=True) or {}
+    action = data.get("action")
+
+    if not action or action not in ['approve', 'reject']:
+        return jsonify({"error": "action must be 'approve' or 'reject'"}), 400
+
+    try:
+        request_uuid = UUID(request_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid request_id format"}), 400
+
+    time_change_request = MeetupTimeChangeRequest.query.filter_by(id=request_uuid).first()
+    if not time_change_request:
+        return jsonify({"error": "Time change request not found"}), 404
+
+    if time_change_request.status != 'pending':
+        return jsonify({"error": "This request has already been responded to"}), 400
+
+    now = datetime.utcnow()
+
+    if action == 'approve':
+        # Update the meetup with the new time
+        meetup = Meetup.query.filter_by(id=time_change_request.meetup_id).first()
+        if meetup:
+            meetup.scheduled_date = time_change_request.new_date
+            meetup.scheduled_time = time_change_request.new_time
+            meetup.updated_at = now
+        
+        time_change_request.status = 'approved'
+    else:
+        time_change_request.status = 'rejected'
+
+    time_change_request.responded_at = now
+    time_change_request.updated_at = now
+
+    db.session.commit()
+
+    return jsonify(time_change_request.to_json())
 
 
 # --- Leaderboard (by total donated weight) ---
