@@ -137,51 +137,102 @@ function DashboardDonor() {
     setSubmitError(null);
   };
 
-  const handleConfirm = async (e) => {
-    e.preventDefault();
-    setSubmitLoading(true);
-    setSubmitError(null);
+const handleConfirm = async (e) => {
+  e.preventDefault();
+  setSubmitLoading(true);
+  setSubmitError(null);
 
-    if (!user || !user.id) {
-      setSubmitError('You must be logged in as a Donor to schedule a donation');
-      setSubmitLoading(false);
-      return;
+  if (!user || !user.id) {
+    setSubmitError('You must be logged in as a Donor to schedule a donation');
+    setSubmitLoading(false);
+    return;
+  }
+
+  // Parse the quantity needed from the selected item
+  const quantityNeededStr = selectedItem.quantityNeeded.replace(' lbs', '');
+  const quantityNeeded = parseFloat(quantityNeededStr);
+  const donationQty = parseFloat(donationQuantity);
+
+  // Validate donation quantity
+  if (donationQty > quantityNeeded) {
+    setSubmitError(`Donation quantity (${donationQty} lbs) exceeds quantity needed (${quantityNeeded} lbs)`);
+    setSubmitLoading(false);
+    return;
+  }
+
+  if (donationQty <= 0) {
+    setSubmitError('Donation quantity must be greater than 0');
+    setSubmitLoading(false);
+    return;
+  }
+
+  // Validate meeting time is within available time range
+  const meetingTimeValue = meetingTime; // Format: "HH:MM"
+  const fromTimeValue = selectedItem.fromTime.substring(0, 5); // Convert "HH:MM:SS" to "HH:MM"
+  const toTimeValue = selectedItem.toTime.substring(0, 5); // Convert "HH:MM:SS" to "HH:MM"
+
+  if (meetingTimeValue < fromTimeValue || meetingTimeValue > toTimeValue) {
+    setSubmitError(`Meeting time must be between ${fromTimeValue} and ${toTimeValue}`);
+    setSubmitLoading(false);
+    return;
+  }
+
+  // Validate meeting date is within available date range
+  if (meetingDate < selectedItem.fromDate || meetingDate > selectedItem.toDate) {
+    setSubmitError(`Meeting date must be between ${selectedItem.fromDate} and ${selectedItem.toDate}`);
+    setSubmitLoading(false);
+    return;
+  }
+
+  try {
+    const response = await fetch('http://127.0.0.1:5000/api/meetups', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        posting_id: selectedItem.id,
+        donor_id: user.id,
+        food_bank_id: selectedFoodBank.id,
+        scheduled_date: meetingDate,
+        scheduled_time: meetingTime,
+        donation_item: selectedItem.name,
+        quantity: donationQty,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to schedule donation');
     }
 
-    try {
-      const response = await fetch('http://127.0.0.1:5000/api/meetups', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          posting_id: selectedItem.id,
-          donor_id: user.id,
-          food_bank_id: selectedFoodBank.id,
-          scheduled_date: meetingDate,
-          scheduled_time: meetingTime,
-          donation_item: selectedItem.name,
-          quantity: parseFloat(donationQuantity),
-        }),
-      });
+    const data = await response.json();
+    console.log('Donation scheduled successfully:', data);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to schedule donation');
-      }
+    // Update the local food items list to reflect the decreased quantity
+    setFoodItemsNeeded(prevItems =>
+      prevItems.map(item => {
+        if (item.id === selectedItem.id) {
+          const currentQty = parseFloat(item.quantityNeeded.replace(' lbs', ''));
+          const newQty = currentQty - donationQty;
+          return {
+            ...item,
+            quantityNeeded: `${newQty.toFixed(2)} lbs`
+          };
+        }
+        return item;
+      })
+    );
 
-      const data = await response.json();
-      console.log('Donation scheduled successfully:', data);
-
-      alert('Donation scheduled successfully! The food bank will be notified.');
-      handleCloseModal();
-    } catch (error) {
-      console.error('Error scheduling donation:', error);
-      setSubmitError(error.message);
-    } finally {
-      setSubmitLoading(false);
-    }
-  };
+    alert('Donation scheduled successfully! The food bank will be notified.');
+    handleCloseModal();
+  } catch (error) {
+    console.error('Error scheduling donation:', error);
+    setSubmitError(error.message);
+  } finally {
+    setSubmitLoading(false);
+  }
+};
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -366,7 +417,7 @@ function DashboardDonor() {
                   required
                 />
                 <small style={{ color: '#666', fontSize: '0.85em', display: 'block', marginTop: '4px' }}>
-                  Dates: {selectedItem?.fromDate ? new Date(selectedItem.fromDate).toLocaleDateString() : ''} to {selectedItem?.toDate ? new Date(selectedItem.toDate).toLocaleDateString() : ''}
+                  Dates: {selectedItem?.fromDate} to {selectedItem?.toDate}
                 </small>
               </div>
 
@@ -378,10 +429,12 @@ function DashboardDonor() {
                   name="meetingTime"
                   value={meetingTime}
                   onChange={(e) => setMeetingTime(e.target.value)}
+                  min={selectedItem?.fromTime?.substring(0, 5)}
+                  max={selectedItem?.toTime?.substring(0, 5)}
                   required
                 />
                 <small style={{ color: '#666', fontSize: '0.85em' }}>
-                  Available Time: {selectedItem?.fromTime} - {selectedItem?.toTime}
+                  Available Time: {selectedItem?.fromTime?.substring(0, 5)} - {selectedItem?.toTime?.substring(0, 5)}
                 </small>
               </div>
               <button type="submit" className="submit-btn" disabled={submitLoading}>
