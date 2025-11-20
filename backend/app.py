@@ -195,9 +195,24 @@ def create_profile():
 
 @app.get("/api/food_banks")
 def list_food_banks():
+    """
+    List all food banks with their item counts.
+    """
     banks = FoodBank.query.order_by(FoodBank.name).all()
-    return jsonify({"food_banks": [b.to_json() for b in banks]})
-
+    
+    # Get posting counts for each food bank
+    bank_data = []
+    for bank in banks:
+        # Count all donation postings for this food bank
+        posting_count = DonationPosting.query.filter(
+            DonationPosting.food_bank_id == bank.id
+        ).count()
+        
+        bank_json = bank.to_json()
+        bank_json['items_needed'] = posting_count
+        bank_data.append(bank_json)
+    
+    return jsonify({"food_banks": bank_data})
 
 # --- Donation postings API ---
 

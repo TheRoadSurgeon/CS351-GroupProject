@@ -45,7 +45,7 @@ function DashboardDonor() {
           name: bank.name,
           distance: 'N/A',
           verified: true,
-          itemCount: 0
+          itemCount: bank.items_needed || 0
         }));
 
         setNearbyFoodBanks(transformedData);
@@ -224,19 +224,17 @@ function DashboardDonor() {
               </div>
 
               <div className="items-list">
-                {nearbyFoodBanks.map(bank => (
+                {nearbyFoodBanks.map((bank) => (
                   <div 
                     key={bank.id} 
                     className="item-card clickable"
                     onClick={() => handleFoodBankClick(bank)}
                   >
                     <div className="item-info">
-                      <h3>
-                        {bank.name} 
-                        {bank.verified && <span className="verified">✓</span>}
-                      </h3>
-                      <p className="distance">{bank.distance}</p>
-                      <p className="item-count">{bank.itemCount} item{bank.itemCount !== 1 ? 's' : ''} needed</p>
+                      <h3>{bank.name}</h3>
+                      <p className="item-count">
+                        {bank.itemCount} item{bank.itemCount !== 1 ? 's' : ''} needed
+                      </p>
                     </div>
                     <button className="view-items-btn">View Items →</button>
                   </div>
