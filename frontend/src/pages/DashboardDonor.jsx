@@ -26,13 +26,12 @@ function DashboardDonor() {
   });
   const [lastFetchTime, setLastFetchTime] = useState(null);
   const [foodBankItemsCache, setFoodBankItemsCache] = useState({});
-  const [sortBy, setSortBy] = useState('name'); // 'name' or 'items'
+  const [sortBy, setSortBy] = useState('name');
   const { user } = useAuth();
  
   
   useEffect(() => {
     const fetchFoodBanks = async () => {
-      // Avoid refetching if we fetched within the last 30 seconds
       const now = Date.now();
       if (lastFetchTime && now - lastFetchTime < 30000) {
         setLoading(false);
@@ -95,7 +94,6 @@ function DashboardDonor() {
   const handleFoodBankClick = async (foodBank) => {
     setSelectedFoodBank(foodBank);
     
-    // Check if we have cached data for this food bank
     if (foodBankItemsCache[foodBank.id]) {
       setFoodItemsNeeded(foodBankItemsCache[foodBank.id]);
       return;
@@ -236,12 +234,11 @@ function DashboardDonor() {
     }
   };
 
-  // Sort food banks based on selected criteria
   const sortedFoodBanks = [...nearbyFoodBanks].sort((a, b) => {
     if (sortBy === 'items') {
-      return b.itemCount - a.itemCount; // Descending order (most items first)
+      return b.itemCount - a.itemCount;
     }
-    return a.name.localeCompare(b.name); // Alphabetical order
+    return a.name.localeCompare(b.name);
   });
 
   return (
