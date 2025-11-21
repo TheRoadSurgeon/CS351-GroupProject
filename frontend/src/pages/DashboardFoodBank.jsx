@@ -310,8 +310,11 @@ const handleItemClick = async (item) => {
     setTimeChangeLoading(true);
     setTimeChangeError(null);
 
-    const today = new Date().toISOString().split('T')[0];
-    const nowTime = new Date().toTimeString().slice(0,5);
+    const now = new Date();
+    const today = now.getFullYear() + '-' +
+      String(now.getMonth() + 1).padStart(2, '0') + '-' +
+      String(now.getDate()).padStart(2, '0');
+    const nowTime = now.toTimeString().slice(0,5);
 
     // Validate new date
     if (timeChangeForm.newDate < today) {
@@ -395,8 +398,11 @@ const handleItemClick = async (item) => {
     setSubmitLoading(true);
     setSubmitError(null);
 
-    const today = new Date().toISOString().split('T')[0];
-    const nowTime = new Date().toTimeString().slice(0,5); // 'HH:MM'
+    const now = new Date();
+    const today = now.getFullYear() + '-' +
+      String(now.getMonth() + 1).padStart(2, '0') + '-' +
+      String(now.getDate()).padStart(2, '0');
+    const nowTime = now.toTimeString().slice(0,5);
 
     // Validate fromDate
     if (postForm.fromDate < today) {
@@ -412,8 +418,8 @@ const handleItemClick = async (item) => {
       return;
     }
 
-    if (postForm.toDate < today) {
-      setSubmitError('To Date cannot be in the past');
+    if (postForm.toDate < postForm.fromDate) {
+      setSubmitError('To Date cannot be earlier than From Date');
       setSubmitLoading(false);
       return;
     }
@@ -423,6 +429,7 @@ const handleItemClick = async (item) => {
       setSubmitLoading(false);
       return;
     }
+
     if (postForm.toDate === today && postForm.toTime < nowTime) {
       setSubmitError('To Time cannot be earlier than the current time');
       setSubmitLoading(false);
@@ -491,15 +498,16 @@ const handleItemClick = async (item) => {
     ? foodItems 
     : foodItems.filter(item => item.urgency === urgencyFilter);
 
-  // Set today's date as default for fromDate and current time as default for fromTime
   useEffect(() => {
     if (showPostModal) {
-      const today = new Date().toISOString().split('T')[0];
       const now = new Date();
+      const localDateString = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0');
       const currentTime = now.toTimeString().slice(0,5); // 'HH:MM'
       setPostForm(form => ({
         ...form,
-        fromDate: today,
+        fromDate: localDateString,
         fromTime: currentTime
       }));
     }
@@ -782,7 +790,12 @@ const handleItemClick = async (item) => {
                   id="fromDate"
                   name="fromDate"
                   value={postForm.fromDate}
-                  min={new Date().toISOString().split('T')[0]}
+                  min={(() => {
+                    const now = new Date();
+                    return now.getFullYear() + '-' +
+                      String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                      String(now.getDate()).padStart(2, '0');
+                  })()}
                   onChange={handleFormChange}
                   required
                 />
@@ -795,6 +808,12 @@ const handleItemClick = async (item) => {
                   id="toDate"
                   name="toDate"
                   value={postForm.toDate}
+                  min={(() => {
+                    const now = new Date();
+                    return now.getFullYear() + '-' +
+                      String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                      String(now.getDate()).padStart(2, '0');
+                  })()}
                   onChange={handleFormChange}
                   required
                 />
@@ -859,7 +878,12 @@ const handleItemClick = async (item) => {
                   id="newDate"
                   name="newDate"
                   value={timeChangeForm.newDate}
-                  min={new Date().toISOString().split('T')[0]}
+                  min={(() => {
+                    const now = new Date();
+                    return now.getFullYear() + '-' +
+                      String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                      String(now.getDate()).padStart(2, '0');
+                  })()}
                   onChange={handleTimeChangeFormChange}
                   required
                 />
