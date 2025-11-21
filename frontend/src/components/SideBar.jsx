@@ -24,12 +24,6 @@ function Sidebar({setPage, currentPage}) {
               Donations
             </button>
             <button 
-              onClick={() => setPage("Food Banks")}
-              className={currentPage === "Food Banks" ? "active" : ""}
-            >
-              Food Banks
-            </button>
-            <button 
               onClick={() => setPage("Leaderboard")}
               className={currentPage === "Leaderboard" ? "active" : ""}
             >

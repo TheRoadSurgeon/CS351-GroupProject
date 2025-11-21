@@ -10,6 +10,7 @@ function DashboardFoodBank() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [donorsLoading, setDonorsLoading] = useState(false);
+  const [urgencyFilter, setUrgencyFilter] = useState('All');
   const [postForm, setPostForm] = useState({
     foodName: '',
     urgency: 'Medium',
@@ -486,6 +487,10 @@ const handleItemClick = async (item) => {
     }
   };
 
+  const filteredFoodItems = urgencyFilter === 'All' 
+    ? foodItems 
+    : foodItems.filter(item => item.urgency === urgencyFilter);
+
   // Set today's date as default for fromDate and current time as default for fromTime
   useEffect(() => {
     if (showPostModal) {
@@ -537,11 +542,14 @@ const handleItemClick = async (item) => {
                       + Make Donation Post
                     </button>
                     <div className="filters">
-                      <select>
-                        <option>All Urgency Levels</option>
-                        <option>High</option>
-                        <option>Medium</option>
-                        <option>Low</option>
+                      <select 
+                        value={urgencyFilter} 
+                        onChange={(e) => setUrgencyFilter(e.target.value)}
+                      >
+                        <option value="All">All Urgency Levels</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
                       </select>
                     </div>
                   </div>
@@ -554,10 +562,10 @@ const handleItemClick = async (item) => {
               )}
 
               <div className="items-list">
-                {foodItems.length === 0 ? (
-                  <p>No donation postings yet. Create one to get started!</p>
+                {filteredFoodItems.length === 0 ? (
+                  <p>No donation postings {urgencyFilter !== 'All' ? `with ${urgencyFilter} urgency` : ''} yet. {urgencyFilter === 'All' ? 'Create one to get started!' : 'Try a different urgency level.'}</p>
                 ) : (
-                  foodItems.map(item => (
+                  filteredFoodItems.map(item => (
                     <div 
                       key={item.id} 
                       className="item-card"
@@ -582,20 +590,33 @@ const handleItemClick = async (item) => {
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeletePosting(item.id);
+                            if (item.donorCount === 0) {
+                              handleDeletePosting(item.id);
+                            }
                           }}
+                          disabled={item.donorCount > 0}
                           style={{
-                            backgroundColor: '#f44336',
-                            color: 'white',
+                            backgroundColor: item.donorCount > 0 ? '#ffcdd2' : '#f44336',
+                            color: item.donorCount > 0 ? '#c62828' : 'white',
                             border: 'none',
                             padding: '10px 15px',
                             borderRadius: '4px',
-                            cursor: 'pointer',
+                            cursor: item.donorCount > 0 ? 'not-allowed' : 'pointer',
                             fontWeight: '600',
-                            fontSize: '14px'
+                            fontSize: '14px',
+                            opacity: item.donorCount > 0 ? 0.9 : 1
                           }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = '#da190b'}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = '#f44336'}
+                          onMouseEnter={(e) => {
+                            if (item.donorCount === 0) {
+                              e.target.style.backgroundColor = '#da190b';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (item.donorCount === 0) {
+                              e.target.style.backgroundColor = '#f44336';
+                            }
+                          }}
+                          title={item.donorCount > 0 ? 'Cannot delete a post that has donors' : 'Delete this posting'}
                         >
                           Delete
                         </button>
