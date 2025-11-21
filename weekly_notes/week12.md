@@ -1,17 +1,35 @@
-# 11/11
+# 11/09
 
 ## Notes
 
+- Retweak main flow to enable request time change
+
+- Delete functionalities considered for MVP
+
+- Look into second back end choice (Bloom Filter usage)
+
 ## To-dos
 
-# 11/14
+- Hristian: implement Bloom Filter basic functionalities
+
+- Nathan: test user flows and log UX issues
+
+- Anupam: finish time-change request UI
+
+# 11/12
 
 ## Notes
 
+- All main pages are functional; a few bugs remain in the pledge flow
+
+- Database structure finalized
+
+- Bloom Filter functionalities done
+
 ## To-dos
 
-# 11/15
+- Hristian: hook up Bloom Filter to front end
 
-## Notes
+- Nathan: patch routing/flow bugs across dashboard and leaderboard
 
-## To-dos
+- polish UI (spacing, icons, consistency)

@@ -1,36 +1,20 @@
-# 10/12
-
-## Notes
-
-- Need to decide on data structure used
-
-- Begin work on lo-fi Figma designs
-
-- Assigning tasks
-
-## To-dos
-
-Hristian + Thomas: look into potential data structures + backend logic
-
-Nathan + Anupam: look into design + potential dashboard designs
-
 # 10/19
 
 ## Notes
 
-- Locking in Tries as data structures, will work on backend skeleton code
+- Decided to use Tries for the data structure; will begin backend skeleton code
 
-- Lo-fi Figma designs are done, need feedback for hi-fi
+- Lo-fi Figma designs are done; need feedback before moving to hi-fi
 
-- Front end skeleton code setup will be next
+- Next step: frontend skeleton setup
 
 ## To-dos
 
-Hristian: work on backend code
+Hristian: start building the backend
 
-Thomas: work on basic front end functionalities
+Thomas: work on basic frontend features
 
-Nathan + Anupam: add feedback + frontend side logic on Figma designs
+Nathan + Anupam: give feedback on the Figma designs, think through frontend logic
 
 # 10/22
 

@@ -3,8 +3,8 @@
 **Q1:** At what time in the week would your group be available to meet online? 
 
 **Answer** 
-*We are avaliable to meet online on Wednesday and Friday after 6:30pm.*
-*Our weekly meetings will be on Friday after 6:30pm*
+*We are avaliable to meet online on Wednesday and Sunday after 6:30pm.*
+*Our weekly meetings will be on Sunday after 6:30pm*
 
 ---
 
