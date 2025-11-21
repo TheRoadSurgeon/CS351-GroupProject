@@ -123,7 +123,7 @@ export default function Register() {
 
   return (
     <div className="auth-container">
-      <h1 className="app-name">Food Bank Connect</h1>
+      <h1 className="app-name">RESTOCKD</h1>
       <div className="auth-card">
         <h2>Register</h2>
         <form onSubmit={handleSubmit}>

@@ -29,7 +29,7 @@ export default function Login() {
 
   return (
     <div className="auth-container">
-      <h1 className="app-name">Food Bank Connect</h1>
+      <h1 className="app-name">RESTOCKD</h1>
       <div className="auth-card">
         <h2>Login</h2>
         <form onSubmit={handleSubmit}>

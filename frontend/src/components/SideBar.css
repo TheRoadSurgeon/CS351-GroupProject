@@ -7,10 +7,19 @@
     position: fixed;
 }
 
-
 #logo {
-    padding: 24px 20px;
-    background-color: #535bf2;
+    padding: 12px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.logo-image {
+    display: block;
+    height: 200px;
+    width: auto;       
+    border-radius: 12px;
+    object-fit: contain;
 }
 
 #sidebarbuttons {
