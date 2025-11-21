@@ -107,7 +107,7 @@ def create_profile():
         from uuid import UUID
         user_uuid = UUID(user_id)
         
-        now = datetime.utcnow()
+        now = datetime.now()
         
         # Check if profile already exists
         existing_profile = Profile.query.filter_by(id=user_uuid).first()

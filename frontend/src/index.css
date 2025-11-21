@@ -54,6 +54,22 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+.no-donors {
+  text-align: center;
+  color: #666;
+  font-size: 1.1em;
+  padding: 40px;
+  font-style: italic;
+}
+
+.items-list > p {
+  text-align: center;
+  color: #666;
+  font-size: 1.1em;
+  padding: 40px;
+  font-style: italic;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

@@ -278,11 +278,11 @@ function MyDonations() {
         <p className="quantity">Amount: {donation.quantity}</p>
         <div className="details">
           <span>
-            Scheduled: {new Date(donation.scheduledDate).toLocaleDateString()} at {donation.scheduledTime}
+            Scheduled: {donation.scheduledDate} at {donation.scheduledTime.substring(0, 5)}
           </span>
           {donation.timeChangeRequest && (
             <span style={{ color: '#ff9800', fontWeight: '600' }}>
-              New time requested: {new Date(donation.timeChangeRequest.new_date).toLocaleDateString()} at {donation.timeChangeRequest.new_time}
+              New time requested: {donation.timeChangeRequest.new_date} at {donation.timeChangeRequest.new_time}
             </span>
           )}
         </div>
@@ -391,15 +391,15 @@ function MyDonations() {
               <div style={{ marginBottom: '20px' }}>
                 <h3 style={{ fontSize: '1.1em', color: '#333', marginBottom: '12px' }}>Current Schedule:</h3>
                 <p style={{ margin: '0', padding: '12px', background: '#fff', border: '1px solid #ddd', borderRadius: '6px', color: '#333' }}>
-                  <strong>Date:</strong> {new Date(selectedTimeChange.scheduledDate).toLocaleDateString()}<br />
-                  <strong>Time:</strong> {selectedTimeChange.scheduledTime}
+                  <strong>Date:</strong> {selectedTimeChange.scheduledDate}<br />
+                  <strong>Time:</strong> {selectedTimeChange.scheduledTime.substring(0, 5)}
                 </p>
               </div>
 
               <div style={{ marginBottom: '20px' }}>
                 <h3 style={{ fontSize: '1.1em', color: '#ff9800', marginBottom: '12px' }}>Requested New Schedule:</h3>
                 <p style={{ margin: '0', padding: '12px', background: '#fff8e1', border: '1px solid #ff9800', borderRadius: '6px', color: '#333' }}>
-                  <strong>Date:</strong> {new Date(selectedTimeChange.timeChangeRequest.new_date).toLocaleDateString()}<br />
+                  <strong>Date:</strong> {selectedTimeChange.timeChangeRequest.new_date}<br />
                   <strong>Time:</strong> {selectedTimeChange.timeChangeRequest.new_time}
                 </p>
               </div>
