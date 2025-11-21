@@ -16,12 +16,18 @@ from models import (
     Donor,
 )
 from trie import Trie
+from bloom_filter import BloomFilter
 
 
 # --- Global Trie setup for searching donation postings ---
 
 search_trie = Trie()
 trie_lock = Lock()
+
+# --- Global Bloom filter for (donor_id, posting_id) ---
+
+meetup_bloom = BloomFilter(size=8192, hash_count=3)
+meetup_bloom_lock = Lock()
 
 
 def _index_posting_in_trie(posting):
@@ -59,6 +65,25 @@ def _build_trie_from_db():
     print(f"Total postings indexed: {len(postings)}")
     print(f"Total unique words indexed: {len(indexed_words)}")
     print(f"\nIndexed words: {sorted(indexed_words)}")
+
+
+def _build_meetup_bloom_from_db():
+    """
+    Rebuild the Bloom filter from all existing Meetup rows.
+    We store keys like "donor_uuid:posting_uuid".
+    """
+    with meetup_bloom_lock:
+        meetup_bloom.clear()
+
+        rows = db.session.query(Meetup.donor_id, Meetup.posting_id).all()
+
+        for donor_id, posting_id in rows:
+            if donor_id is None or posting_id is None:
+                continue
+            key = f"{donor_id}:{posting_id}"
+            meetup_bloom.add(key)
+
+    print(f"Bloom filter built from {len(rows)} meetup rows")
 
 
 # --- User Profile Creation API ---
@@ -233,7 +258,6 @@ def get_donation_postings():
     # Only return active postings
     postings = DonationPosting.query.filter_by(is_active=True).all()
     return jsonify({"postings": [p.to_json() for p in postings]}), 200
-
 
 
 @app.get("/api/donation_postings/<posting_id>")
@@ -478,6 +502,23 @@ def create_meetup():
         fb_uuid = UUID(food_bank_id)
     except (ValueError, TypeError):
         return jsonify({"error": "Invalid UUID format"}), 400
+    
+    # --- Bloom filter check: has this donor already scheduled for this posting? ---
+    pair_key = f"{donor_uuid}:{posting_uuid}"
+
+    with meetup_bloom_lock:
+        if pair_key in meetup_bloom:
+            # Bloom filter says "probably yes" → confirm with real DB query
+            existing = (
+                Meetup.query
+                .filter_by(donor_id=donor_uuid, posting_id=posting_uuid)
+                .first()
+            )
+            if existing:
+                return jsonify({
+                    "error": "You already have a donation scheduled for this posting."
+                }), 400
+    # ---------------------------------------------------------------------------
 
     # Validate scheduled_date and scheduled_time
     scheduled_date_str = data.get("scheduled_date")
@@ -561,8 +602,14 @@ def create_meetup():
 
     db.session.add(meetup)
     db.session.commit()
+
+    # After successfully creating the meetup, add the pair to the Bloom filter
+    pair_key = f"{donor_uuid}:{posting_uuid}"
+    with meetup_bloom_lock:
+        meetup_bloom.add(pair_key)
     
     return jsonify(meetup.to_json()), 201
+
 
 @app.put("/api/meetups/<meetup_id>/complete")
 def mark_meetup_completed(meetup_id):
@@ -850,13 +897,22 @@ def leaderboard():
     })
 
 
-
 if __name__ == "__main__":
     with app.app_context():
+        # Build Trie at startup
         try:
             _build_trie_from_db()
         except Exception as e:
             print("WARNING: Could not build Trie from DB at startup:", repr(e))
             import traceback
             traceback.print_exc()
+
+        # Build Meetup Bloom filter at startup
+        try:
+            _build_meetup_bloom_from_db()
+        except Exception as e:
+            print("WARNING: Could not build Meetup Bloom filter at startup:", repr(e))
+            import traceback
+            traceback.print_exc()
+
     app.run(debug=True, port=5000)
