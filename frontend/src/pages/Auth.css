@@ -10,7 +10,7 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  background: #1E3E62;
+  background: #535bf2;
   padding: 20px;
   margin: 0;
   overflow-y: auto;
@@ -18,7 +18,7 @@
 }
 
 .app-name {
-  font-size: 48px;
+  font-size: 60px;
   font-weight: 700;
   color: #F0F8FF;
   margin: 0;
