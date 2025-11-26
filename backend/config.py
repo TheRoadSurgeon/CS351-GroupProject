@@ -40,6 +40,7 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 allowed_origins = [
     "http://localhost:5173",  # Local development
     "http://127.0.0.1:5173",  # Alternative localhost
+    "https://restockd-ten.vercel.app",
     os.getenv("FRONTEND_URL", ""),  # Production frontend URL from .env
 ]
 
