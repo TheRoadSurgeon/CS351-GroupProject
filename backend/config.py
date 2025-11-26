@@ -35,6 +35,21 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "max_overflow": 5,       # Additional connections if pool is full
 }
 
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+# CORS Configuration
+# For production, update origins to include your deployed frontend URL
+allowed_origins = [
+    "http://localhost:5173",  # Local development
+    "http://127.0.0.1:5173",  # Alternative localhost
+    os.getenv("FRONTEND_URL", ""),  # Production frontend URL from .env
+]
+
+# Remove empty strings
+allowed_origins = [origin for origin in allowed_origins if origin]
+
+# Allow all origins in development, specific origins in production
+if os.getenv("FLASK_ENV") == "production":
+    CORS(app, resources={r"/api/*": {"origins": allowed_origins}})
+else:
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 db = SQLAlchemy(app)
