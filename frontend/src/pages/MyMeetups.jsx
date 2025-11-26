@@ -12,6 +12,8 @@ function MyMeetups() {
   // Cache for donors to avoid refetching
   const [donorsCache, setDonorsCache] = useState({});
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+
   // Fetch all meetups for this food bank
   useEffect(() => {
     const fetchMeetups = async () => {
@@ -27,7 +29,7 @@ function MyMeetups() {
 
         // Fetch all meetups for this food bank
         const meetupsResponse = await fetch(
-          `http://127.0.0.1:5000/api/meetups?food_bank_id=${user.id}`
+          `${API_URL}/api/meetups?food_bank_id=${user.id}`
         );
 
         if (!meetupsResponse.ok) {
@@ -39,7 +41,7 @@ function MyMeetups() {
 
         // Fetch time change requests
         const timeChangeResponse = await fetch(
-          'http://127.0.0.1:5000/api/meetup_time_change_requests'
+          `${API_URL}/api/meetup_time_change_requests`
         );
 
         let timeChangeRequests = [];
@@ -67,7 +69,7 @@ function MyMeetups() {
                 donorName = donorsCache[meetup.donor_id];
               } else {
                 const donorResponse = await fetch(
-                  `http://127.0.0.1:5000/api/donors/${meetup.donor_id}`
+                  `${API_URL}/api/donors/${meetup.donor_id}`
                 );
                 if (donorResponse.ok) {
                   const donorData = await donorResponse.json();
@@ -79,7 +81,7 @@ function MyMeetups() {
               // Get posting details (food item name)
               let foodItemName = 'Unknown Item';
               const postingResponse = await fetch(
-                `http://127.0.0.1:5000/api/donation_postings/${meetup.posting_id}`
+                `${API_URL}/api/donation_postings/${meetup.posting_id}`
               );
               if (postingResponse.ok) {
                 const postingData = await postingResponse.json();
@@ -142,7 +144,7 @@ function MyMeetups() {
     setActionLoading({ meetupId, action: isCompleted ? 'completed' : 'not-completed' });
     
     try {
-      const response = await fetch(`http://127.0.0.1:5000/api/meetups/${meetupId}/complete`, {
+      const response = await fetch(`${API_URL}/api/meetups/${meetupId}/complete`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -5,9 +5,10 @@ function FoodBanks() {
   const [foodBanks, setFoodBanks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
 
   useEffect(() => {
-    fetch('/banks.json')
+    fetch(`${API_URL}/banks.json`)
       .then(response => response.json())
       .then(data => {
         setFoodBanks(data);

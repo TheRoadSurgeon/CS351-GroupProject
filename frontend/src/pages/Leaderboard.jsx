@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import './Leaderboard.css';
 
-const API_BASE_URL = 'http://127.0.0.1:5000';
-
 function Leaderboard() {
   const [timeFrame, setTimeFrame] = useState('week');
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -16,7 +16,7 @@ function Leaderboard() {
 
       try {
         const res = await fetch(
-          `${API_BASE_URL}/api/leaderboard?timeframe=${timeFrame}`
+          `${API_URL}/api/leaderboard?timeframe=${timeFrame}`
         );
 
         if (!res.ok) {

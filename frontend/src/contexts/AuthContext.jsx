@@ -14,6 +14,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
 
   useEffect(() => {
     // Check active sessions and sets the user
@@ -58,7 +59,7 @@ export const AuthProvider = ({ children }) => {
         }
         
         // Call backend to create profile
-        const profileResponse = await fetch('http://127.0.0.1:5000/api/profiles', {
+        const profileResponse = await fetch(`${API_URL}/api/profiles`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

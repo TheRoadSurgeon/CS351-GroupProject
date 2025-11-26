@@ -37,6 +37,7 @@ function DashboardFoodBank() {
   const { user } = useAuth();
 
   const FOOD_BANK_ID = user?.id;
+  const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
 
   // Fetch donation postings and their donor counts
 useEffect(() => {
@@ -56,7 +57,7 @@ useEffect(() => {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://127.0.0.1:5000/api/donation_postings?food_bank_id=${FOOD_BANK_ID}`
+        `${API_URL}/api/donation_postings?food_bank_id=${FOOD_BANK_ID}`
       );
 
       if (!response.ok) {
@@ -70,7 +71,7 @@ useEffect(() => {
         data.postings.map(async (posting) => {
           try {
             const meetupsResponse = await fetch(
-              `http://127.0.0.1:5000/api/meetups?posting_id=${posting.id}&completed=false`
+              `${API_URL}/api/meetups?posting_id=${posting.id}&completed=false`
             );
             
             let donorCount = 0;
@@ -129,7 +130,7 @@ const handleDeletePosting = async (itemId) => {
   }
 
   try {
-    const response = await fetch(`http://127.0.0.1:5000/api/donation_postings/${itemId}`, {
+    const response = await fetch(`${API_URL}/api/donation_postings/${itemId}`, {
       method: 'DELETE',
     });
 
@@ -162,7 +163,7 @@ const handleItemClick = async (item) => {
   try {
     // Fetch ONLY non-completed meetups for this posting
     const meetupsResponse = await fetch(
-      `http://127.0.0.1:5000/api/meetups?posting_id=${item.id}&completed=false`
+      `${API_URL}/api/meetups?posting_id=${item.id}&completed=false`
     );
     
     if (!meetupsResponse.ok) {
@@ -174,7 +175,7 @@ const handleItemClick = async (item) => {
 
     // Fetch time change requests for these meetups
     const timeChangeResponse = await fetch(
-      'http://127.0.0.1:5000/api/meetup_time_change_requests'
+      `${API_URL}/api/meetup_time_change_requests`
     );
 
     let timeChangeRequests = [];
@@ -200,7 +201,7 @@ const handleItemClick = async (item) => {
         try {
           // Fetch donor profile
           const donorResponse = await fetch(
-            `http://127.0.0.1:5000/api/donors/${meetup.donor_id}`
+            `${API_URL}/api/donors/${meetup.donor_id}`
           );
 
           let donorName = 'Unknown Donor';
@@ -332,7 +333,7 @@ const handleItemClick = async (item) => {
 
     try {
       // Create a time change request instead of directly updating the meetup
-      const response = await fetch('http://127.0.0.1:5000/api/meetup_time_change_requests', {
+      const response = await fetch(`${API_URL}/api/meetup_time_change_requests`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -443,7 +444,7 @@ const handleItemClick = async (item) => {
     }
 
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/donation_postings', {
+      const response = await fetch(`${API_URL}/api/donation_postings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

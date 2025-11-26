@@ -16,6 +16,8 @@ function MyDonations() {
   // Cache for food banks to avoid refetching
   const [foodBanksCache, setFoodBanksCache] = useState(null);
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+
   // Fetch all donations (meetups) for this donor
   useEffect(() => {
     const fetchDonations = async () => {
@@ -38,7 +40,7 @@ function MyDonations() {
 
         // Fetch all meetups for this donor
         const meetupsResponse = await fetch(
-          `http://127.0.0.1:5000/api/meetups?donor_id=${user.id}`
+          `${API_URL}/api/meetups?donor_id=${user.id}`
         );
 
         if (!meetupsResponse.ok) {
@@ -50,7 +52,7 @@ function MyDonations() {
 
         // Fetch pending time change requests
         const timeChangeResponse = await fetch(
-          'http://127.0.0.1:5000/api/meetup_time_change_requests?status=pending'
+          `${API_URL}/api/meetup_time_change_requests?status=pending`
         );
 
         let timeChangeRequests = [];
@@ -71,7 +73,7 @@ function MyDonations() {
           foodBanksData = foodBanksCache;
         } else {
           const foodBankResponse = await fetch(
-            `http://127.0.0.1:5000/api/food_banks`
+            `${API_URL}/api/food_banks`
           );
           if (foodBankResponse.ok) {
             const data = await foodBankResponse.json();
@@ -170,7 +172,7 @@ function MyDonations() {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:5000/api/meetup_time_change_requests/${selectedTimeChange.timeChangeRequest.id}`,
+        `${API_URL}/api/meetup_time_change_requests/${selectedTimeChange.timeChangeRequest.id}`,
         {
           method: 'PUT',
           headers: {

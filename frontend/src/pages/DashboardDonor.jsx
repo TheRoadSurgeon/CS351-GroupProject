@@ -28,7 +28,8 @@ function DashboardDonor() {
   const [foodBankItemsCache, setFoodBankItemsCache] = useState({});
   const [sortBy, setSortBy] = useState('name');
   const { user } = useAuth();
- 
+  
+  const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
   
   useEffect(() => {
     const fetchFoodBanks = async () => {
@@ -42,7 +43,7 @@ function DashboardDonor() {
         setLoading(true);
         setError(null);
         
-        const response = await fetch('http://127.0.0.1:5000/api/food_banks');
+        const response = await fetch(`${API_URL}/api/food_banks`);
         if (!response.ok) {
           throw new Error('Failed to fetch food banks');
         }
@@ -78,7 +79,7 @@ function DashboardDonor() {
 
     const fetchSuggestions = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:5000/api/items/autocomplete?q=${encodeURIComponent(searchTerm)}`);
+        const response = await fetch(`${API_URL}/api/items/autocomplete?q=${encodeURIComponent(searchTerm)}`);
         const data = await response.json();
         setSuggestions(data.items || []);
       } catch (error) {
@@ -104,7 +105,7 @@ function DashboardDonor() {
     
     try {
       const response = await fetch(
-        `http://127.0.0.1:5000/api/donation_postings?food_bank_id=${foodBank.id}`
+        `${API_URL}/api/donation_postings?food_bank_id=${foodBank.id}`
       );
       
       if (!response.ok) {
@@ -206,7 +207,7 @@ const handleConfirm = async (e) => {
   }
 
   try {
-    const response = await fetch('http://127.0.0.1:5000/api/meetups', {
+    const response = await fetch(`${API_URL}/api/meetups`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -272,7 +273,7 @@ const handleConfirm = async (e) => {
     if (!query.trim()) return;
     
     try {
-      const response = await fetch(`http://127.0.0.1:5000/api/search/postings?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`${API_URL}/api/search/postings?q=${encodeURIComponent(query)}`);
       const data = await response.json();
       console.log('Search results:', data.postings);
     } catch (error) {
