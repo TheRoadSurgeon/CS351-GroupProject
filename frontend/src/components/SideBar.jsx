@@ -34,11 +34,6 @@ function Sidebar({ setPage, currentPage }) {
           Leaderboard
         </button>
       </div>    
-
-      <div id="signout">
-        <button>Sign Out</button>
-      </div>
-
     </div>
   );
 }
